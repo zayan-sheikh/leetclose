@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import CallTimer from "@/components/CallTimer";
@@ -13,6 +14,15 @@ import {
 import { TRAINING_MODES, type TrainingModeId } from "@/lib/modes";
 import { getInitialMessageForPersona } from "@/lib/prospect-prompt";
 import { loadProgress, personaAllowed } from "@/lib/gamification";
+
+const UserCallCamera = dynamic(() => import("@/components/UserCallCamera"), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute bottom-4 right-4 w-56 aspect-video rounded-lg border border-border bg-[#1a1a1a] flex items-center justify-center text-[10px] text-muted px-2 text-center">
+      Loading camera…
+    </div>
+  ),
+});
 
 type CallState = "waiting" | "active" | "ended";
 
@@ -29,6 +39,8 @@ export default function CallPage() {
   const [modeId, setModeId] = useState<TrainingModeId>("full_call");
   const [stripeSent, setStripeSent] = useState(false);
   const [sendingStripe, setSendingStripe] = useState(false);
+  const [speechHint, setSpeechHint] = useState<string | null>(null);
+  const [typedLine, setTypedLine] = useState("");
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesRef = useRef<TranscriptMessage[]>([]);
@@ -147,6 +159,7 @@ export default function CallPage() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
+    recognition.maxAlternatives = 1;
 
     let finalTranscript = "";
 
@@ -162,6 +175,7 @@ export default function CallPage() {
             setIsListening(false);
             setCurrentTranscript("");
             finalTranscript = "";
+            setSpeechHint(null);
             sendToAI(textToSend).then(() => {
               try {
                 recognition.start();
@@ -179,8 +193,26 @@ export default function CallPage() {
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      if (event.error !== "no-speech" && event.error !== "aborted") {
-        console.error("Speech recognition error:", event.error);
+      const code = event.error;
+      if (code === "no-speech" || code === "aborted") return;
+
+      if (code === "network") {
+        setSpeechHint(
+          "Voice-to-text needs an internet connection (Chrome sends audio to Google). Use “Type reply” below, or check Wi‑Fi / VPN / firewall."
+        );
+        return;
+      }
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        setSpeechHint("Microphone permission blocked. Allow mic for this site or use “Type reply” below.");
+        return;
+      }
+      if (code === "audio-capture") {
+        setSpeechHint("No microphone detected or it’s in use elsewhere. Try “Type reply” or unplug other apps using the mic.");
+        return;
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.warn("Speech recognition:", code);
       }
     };
 
@@ -188,6 +220,28 @@ export default function CallPage() {
     recognition.start();
     setIsListening(true);
   }, [sendToAI]);
+
+  const sendTypedReply = useCallback(() => {
+    const t = typedLine.trim();
+    if (!t || isAiTalking) return;
+    setTypedLine("");
+    setSpeechHint(null);
+    setCurrentTranscript("");
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+    sendToAI(t).then(() => {
+      if (!isMutedRef.current) {
+        startListening();
+      }
+    });
+  }, [typedLine, isAiTalking, sendToAI, startListening]);
 
   const startCall = useCallback(async () => {
     const p = loadProgress();
@@ -204,6 +258,8 @@ export default function CallPage() {
     setCallStartTime(Date.now());
     setMessages([]);
     setStripeSent(false);
+    setSpeechHint(null);
+    setTypedLine("");
     chatHistoryRef.current = [];
 
     if ("speechSynthesis" in window) {
@@ -437,22 +493,50 @@ export default function CallPage() {
               avatarTone={activePersona.avatarTone}
             />
 
-            <div className="absolute bottom-4 right-4 w-40 h-28 bg-[#1a1a1a] rounded-lg border border-border overflow-hidden flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-10 h-10 rounded-full bg-accent mx-auto flex items-center justify-center text-white font-bold text-sm">
-                  You
-                </div>
-                <p className="text-xs text-muted mt-1">
-                  {isListening ? "Listening..." : isMuted ? "Muted" : ""}
-                </p>
-              </div>
-            </div>
+            <UserCallCamera
+              enabled={callState === "active"}
+              isListening={isListening}
+              isMuted={isMuted}
+            />
 
             {currentTranscript && (
-              <div className="absolute bottom-4 left-4 right-48 bg-black/70 rounded-lg px-4 py-2">
+              <div className="absolute bottom-4 left-4 right-[15rem] sm:right-[15.5rem] bg-black/70 rounded-lg px-4 py-2">
                 <p className="text-sm text-white/90">{currentTranscript}...</p>
               </div>
             )}
+          </div>
+
+          {speechHint && (
+            <div className="bg-[#111] border-t border-border px-4 py-2">
+              <p className="text-xs text-warning text-center max-w-2xl mx-auto leading-snug">
+                {speechHint}
+              </p>
+            </div>
+          )}
+
+          <div className="bg-[#111] px-4 py-2 flex flex-wrap items-center gap-2 justify-center border-t border-border/60">
+            <input
+              type="text"
+              value={typedLine}
+              onChange={(e) => setTypedLine(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendTypedReply();
+                }
+              }}
+              placeholder="Type reply if mic / network fails…"
+              disabled={isAiTalking}
+              className="flex-1 min-w-[12rem] max-w-md px-3 py-2 rounded-lg bg-[#1a1a1a] border border-border text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={sendTypedReply}
+              disabled={!typedLine.trim() || isAiTalking}
+              className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-sm font-medium"
+            >
+              Send
+            </button>
           </div>
 
           <div className="bg-[#111] px-4 py-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
