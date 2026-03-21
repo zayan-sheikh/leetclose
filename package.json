@@ -3,18 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@heygen/liveavatar-web-sdk": "^0.0.11",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "stripe": "^20.4.1"
   },
   "devDependencies": {
+    "@tailwindcss/oxide-win32-x64-msvc": "^4.2.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

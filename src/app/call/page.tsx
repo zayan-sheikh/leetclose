@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
-import Avatar from "@/components/Avatar";
+import Avatar, { type AvatarHandle } from "@/components/Avatar";
 import CallTimer from "@/components/CallTimer";
 import Transcript, { TranscriptMessage } from "@/components/Transcript";
 import {
@@ -31,6 +31,7 @@ export default function CallPage() {
   const [sendingStripe, setSendingStripe] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const avatarRef = useRef<AvatarHandle>(null);
   const messagesRef = useRef<TranscriptMessage[]>([]);
   const chatHistoryRef = useRef<{ role: string; content: string }[]>([]);
   const personaIdRef = useRef(personaId);
@@ -61,39 +62,66 @@ export default function CallPage() {
     return stored ? JSON.parse(stored) : {};
   }, []);
 
-  const speak = useCallback((text: string) => {
-    return new Promise<void>((resolve) => {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(
-          (v) =>
-            v.name.includes("Female") ||
-            v.name.includes("Samantha") ||
-            v.name.includes("Karen") ||
-            v.name.includes("Zira") ||
-            v.name.includes("Google UK English Female") ||
-            (v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
-        );
-        if (femaleVoice) utterance.voice = femaleVoice;
-        utterance.rate = 0.95;
-        utterance.pitch = 1.05;
-        utterance.onstart = () => setIsAiTalking(true);
-        utterance.onend = () => {
-          setIsAiTalking(false);
-          resolve();
-        };
-        utterance.onerror = () => {
-          setIsAiTalking(false);
-          resolve();
-        };
-        window.speechSynthesis.speak(utterance);
-      } else {
-        resolve();
-      }
-    });
+  /** Avatar mounts only after `callState === "active"`; wait until the ref is attached. */
+  const waitForAvatarHandle = useCallback(async (maxMs = 10_000) => {
+    const start = Date.now();
+    while (!avatarRef.current && Date.now() - start < maxMs) {
+      await new Promise((r) => setTimeout(r, 32));
+    }
   }, []);
+
+  const speak = useCallback(
+    async (text: string) => {
+      await waitForAvatarHandle();
+      const heygen = avatarRef.current;
+      if (heygen) {
+        try {
+          setIsAiTalking(true);
+          await heygen.speak(text);
+          return;
+        } catch (e) {
+          console.error("[call] HeyGen speak failed:", e);
+          return;
+        } finally {
+          setIsAiTalking(false);
+        }
+      }
+
+      await new Promise<void>((resolve) => {
+        if ("speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          const voices = window.speechSynthesis.getVoices();
+          const femaleVoice = voices.find(
+            (v) =>
+              v.name.includes("Female") ||
+              v.name.includes("Samantha") ||
+              v.name.includes("Karen") ||
+              v.name.includes("Zira") ||
+              v.name.includes("Google UK English Female") ||
+              (v.lang.startsWith("en") &&
+                v.name.toLowerCase().includes("female")),
+          );
+          if (femaleVoice) utterance.voice = femaleVoice;
+          utterance.rate = 0.95;
+          utterance.pitch = 1.05;
+          utterance.onstart = () => setIsAiTalking(true);
+          utterance.onend = () => {
+            setIsAiTalking(false);
+            resolve();
+          };
+          utterance.onerror = () => {
+            setIsAiTalking(false);
+            resolve();
+          };
+          window.speechSynthesis.speak(utterance);
+        } else {
+          resolve();
+        }
+      });
+    },
+    [waitForAvatarHandle],
+  );
 
   const sendToAI = useCallback(
     async (userText: string) => {
@@ -132,12 +160,16 @@ export default function CallPage() {
         console.error("Failed to get AI response:", error);
       }
     },
-    [getProfile, speak]
+    [getProfile, speak],
   );
 
   const startListening = useCallback(() => {
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-      alert("Speech recognition is not supported in this browser. Please use Chrome.");
+    if (
+      !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
+    ) {
+      alert(
+        "Speech recognition is not supported in this browser. Please use Chrome.",
+      );
       return;
     }
 
@@ -213,7 +245,9 @@ export default function CallPage() {
 
     const greeting = getInitialMessageForPersona(personaId);
     chatHistoryRef.current.push({ role: "assistant", content: greeting });
-    setMessages([{ role: "prospect", content: greeting, timestamp: Date.now() }]);
+    setMessages([
+      { role: "prospect", content: greeting, timestamp: Date.now() },
+    ]);
     await speak(greeting);
     startListening();
   }, [personaId, modeId, speak, startListening]);
@@ -234,7 +268,9 @@ export default function CallPage() {
 
     const callData = {
       messages: messagesRef.current,
-      duration: callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0,
+      duration: callStartTime
+        ? Math.floor((Date.now() - callStartTime) / 1000)
+        : 0,
       timestamp: Date.now(),
       personaId,
       modeId,
@@ -320,7 +356,10 @@ export default function CallPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b border-border px-4 py-3 flex justify-between items-center">
-          <Link href="/dashboard" className="text-sm text-muted hover:text-foreground">
+          <Link
+            href="/dashboard"
+            className="text-sm text-muted hover:text-foreground"
+          >
             ← Dashboard
           </Link>
           <span className="text-xs text-muted">CloserArena AI</span>
@@ -328,10 +367,13 @@ export default function CallPage() {
         <div className="max-w-3xl mx-auto px-4 py-10">
           <h1 className="text-2xl font-bold mb-2">Practice call setup</h1>
           <p className="text-muted text-sm mb-8">
-            Pick a prospect and training mode. Mic + speakers on — Chrome recommended.
+            Pick a prospect and training mode. Mic + speakers on — Chrome
+            recommended.
           </p>
 
-          <label className="block text-sm font-medium mb-2">Training mode</label>
+          <label className="block text-sm font-medium mb-2">
+            Training mode
+          </label>
           <select
             value={modeId}
             onChange={(e) => setModeId(e.target.value as TrainingModeId)}
@@ -350,7 +392,9 @@ export default function CallPage() {
           <h2 className="text-sm font-semibold mb-3">Prospect</h2>
           <div className="grid sm:grid-cols-2 gap-3 mb-8">
             {roster.map((p) => {
-              const allowed = prog ? personaAllowed(p, prog) : p.unlockedByDefault;
+              const allowed = prog
+                ? personaAllowed(p, prog)
+                : p.unlockedByDefault;
               return (
                 <button
                   key={p.id}
@@ -394,7 +438,10 @@ export default function CallPage() {
     <div className="h-screen bg-[#0a0a0a] flex flex-col">
       <div className="flex items-center justify-between px-4 py-2 bg-[#111]">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-xs text-muted hover:text-foreground">
+          <Link
+            href="/dashboard"
+            className="text-xs text-muted hover:text-foreground"
+          >
             Exit
           </Link>
           <span className="text-sm font-medium">CloserArena</span>
@@ -403,7 +450,10 @@ export default function CallPage() {
             {activePersona.firstName}
           </span>
         </div>
-        <CallTimer isActive={callState === "active"} startTime={callStartTime} />
+        <CallTimer
+          isActive={callState === "active"}
+          startTime={callStartTime}
+        />
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -415,7 +465,12 @@ export default function CallPage() {
             }`}
             title="Toggle transcript"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -431,6 +486,7 @@ export default function CallPage() {
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 relative">
             <Avatar
+              ref={avatarRef}
               isTalking={isAiTalking}
               isListening={isListening}
               displayName={activePersona.displayName}
@@ -467,7 +523,12 @@ export default function CallPage() {
               title={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -482,7 +543,12 @@ export default function CallPage() {
                   />
                 </svg>
               ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -503,7 +569,11 @@ export default function CallPage() {
                   : "bg-[#635bff] hover:bg-[#5349e8] text-white"
               } disabled:opacity-50`}
             >
-              {stripeSent ? "Link sent" : sendingStripe ? "Sending…" : "Send Stripe link"}
+              {stripeSent
+                ? "Link sent"
+                : sendingStripe
+                  ? "Sending…"
+                  : "Send Stripe link"}
             </button>
 
             <button
@@ -511,7 +581,12 @@ export default function CallPage() {
               onClick={endCall}
               className="px-6 py-3 bg-danger hover:bg-danger/90 text-white rounded-full font-medium transition-colors flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
