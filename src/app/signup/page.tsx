@@ -27,7 +27,9 @@ export default function SignupPage() {
             <span className="text-white font-bold">CA</span>
           </div>
           <h1 className="text-2xl font-bold">Create your account</h1>
-          <p className="text-sm text-muted mt-1">Start practicing sales calls today</p>
+          <p className="text-sm text-muted mt-1">
+            3-day free trial · Start practicing sales calls today
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -2,18 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildProspectSystemPrompt } from "@/lib/prospect-prompt";
 
 export async function POST(req: NextRequest) {
-  const { messages, profile } = await req.json();
+  const { messages, profile, personaId, modeId } = await req.json();
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!apiKey) {
-    // Fallback: return a canned response if no API key configured
     return NextResponse.json({
       response: getFallbackResponse(messages),
     });
   }
 
-  const systemPrompt = buildProspectSystemPrompt(profile || {});
+  const systemPrompt = buildProspectSystemPrompt(
+    profile || {},
+    personaId,
+    modeId
+  );
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -61,7 +64,17 @@ function getFallbackResponse(
   const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || "";
   const messageCount = messages.filter((m: { role: string }) => m.role === "user").length;
 
-  // Simulate a realistic prospect conversation without an API key
+  if (lastMessage.includes("[coach sent stripe") || lastMessage.includes("stripe link")) {
+    const roll = messageCount % 3;
+    if (roll === 0) {
+      return "Okay… I see it. I'm kind of nervous clicking it but… yeah. Let's do it. I just don't want to regret this.";
+    }
+    if (roll === 1) {
+      return "Wait — before I pay, can you confirm what's included in the first 30 days? Like, exactly how often do we check in?";
+    }
+    return "Hmm. I see the link. I'm not going to lie, my stomach just dropped. Can we do a smaller first step or is it all upfront?";
+  }
+
   if (messageCount <= 1) {
     return "Hey! Yeah, I can hear you fine. Thanks for taking the time to chat today.";
   }

@@ -14,7 +14,7 @@ export default function LoginPage() {
     const user = localStorage.getItem("closearena_user");
     if (user) {
       const onboarded = localStorage.getItem("closearena_onboarded");
-      router.push(onboarded ? "/call" : "/onboarding");
+      router.push(onboarded ? "/dashboard" : "/onboarding");
     } else {
       // Auto-create for MVP
       localStorage.setItem(

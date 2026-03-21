@@ -13,20 +13,31 @@ export default function LandingPage() {
           <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
             <span className="text-white font-bold text-sm">CA</span>
           </div>
-          <span className="font-bold text-lg">CloseArena</span>
+          <span className="font-bold text-lg">
+            CloserArena <span className="text-muted font-medium text-sm">AI</span>
+          </span>
         </div>
         <div className="flex items-center gap-4">
           <button
+            type="button"
+            onClick={() => router.push("/pricing")}
+            className="text-sm text-muted hover:text-foreground transition-colors"
+          >
+            Pricing
+          </button>
+          <button
+            type="button"
             onClick={() => router.push("/login")}
             className="text-sm text-muted hover:text-foreground transition-colors"
           >
             Log in
           </button>
           <button
+            type="button"
             onClick={() => router.push("/signup")}
             className="text-sm px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors"
           >
-            Sign up free
+            Start free 3-day trial
           </button>
         </div>
       </nav>
@@ -47,12 +58,14 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
+            type="button"
             onClick={() => router.push("/signup")}
             className="px-8 py-4 bg-accent hover:bg-accent-hover text-white rounded-xl font-medium text-lg transition-colors"
           >
-            Start practicing free
+            Start free 3-day trial
           </button>
           <button
+            type="button"
             onClick={() => router.push("/call")}
             className="px-8 py-4 bg-card border border-border hover:bg-card-hover text-foreground rounded-xl font-medium text-lg transition-colors"
           >
@@ -71,7 +84,7 @@ export default function LandingPage() {
               <div className="w-3 h-3 rounded-full bg-warning/60" />
               <div className="w-3 h-3 rounded-full bg-success/60" />
             </div>
-            <span className="text-xs text-muted">CloseArena — Practice Call</span>
+            <span className="text-xs text-muted">CloserArena AI — Practice Call</span>
             <div className="w-12" />
           </div>
           {/* Mockup content */}
@@ -187,10 +200,11 @@ export default function LandingPage() {
             could handle. Start practicing today.
           </p>
           <button
+            type="button"
             onClick={() => router.push("/signup")}
             className="px-8 py-4 bg-accent hover:bg-accent-hover text-white rounded-xl font-medium text-lg transition-colors"
           >
-            Start practicing free
+            Start free 3-day trial
           </button>
         </div>
       </section>
@@ -202,7 +216,7 @@ export default function LandingPage() {
             <div className="w-6 h-6 rounded bg-accent flex items-center justify-center">
               <span className="text-white font-bold text-xs">CA</span>
             </div>
-            <span className="text-sm text-muted">CloseArena</span>
+            <span className="text-sm text-muted">CloserArena AI</span>
           </div>
           <p className="text-xs text-muted">
             Practice sales calls until closing feels automatic.

@@ -38,6 +38,40 @@ const STEPS = [
     key: "offerPrice",
   },
   {
+    question: "What niche are you in?",
+    options: [
+      "Fat loss / body recomposition",
+      "Muscle building",
+      "Hybrid athletes",
+      "Busy professionals",
+      "Postpartum / moms",
+      "General population online",
+    ],
+    key: "niche",
+  },
+  {
+    question: "What's your current close rate on sales calls?",
+    options: [
+      "Under 10%",
+      "10–25%",
+      "25–40%",
+      "40–60%",
+      "60%+",
+    ],
+    key: "closeRate",
+  },
+  {
+    question: "What tone do you want to practice with?",
+    options: [
+      "Warm & consultative",
+      "Direct & confident",
+      "Calm authority",
+      "High-energy motivator",
+      "Clinical / precise",
+    ],
+    key: "practiceTone",
+  },
+  {
     question: "Which objections do you struggle with most?",
     options: [
       "Too expensive",
@@ -66,9 +100,7 @@ export default function OnboardingPage() {
   const handleSelect = (option: string) => {
     if (isMulti) {
       setSelectedMulti((prev) =>
-        prev.includes(option)
-          ? prev.filter((o) => o !== option)
-          : [...prev, option]
+        prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option]
       );
     } else {
       const newAnswers = { ...answers, [current.key]: option };
@@ -97,13 +129,12 @@ export default function OnboardingPage() {
   const finishOnboarding = (finalAnswers: Record<string, string | string[]>) => {
     localStorage.setItem("closearena_profile", JSON.stringify(finalAnswers));
     localStorage.setItem("closearena_onboarded", "true");
-    router.push("/call");
+    router.push("/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
-        {/* Progress */}
         <div className="flex gap-2 mb-8">
           {STEPS.map((_, i) => (
             <div
@@ -115,7 +146,6 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        {/* Question */}
         <div className="text-center mb-8">
           <p className="text-xs text-muted uppercase tracking-wider mb-2">
             Step {step + 1} of {STEPS.length}
@@ -126,11 +156,11 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        {/* Options */}
         <div className="space-y-3">
           {current.options.map((option) => (
             <button
               key={option}
+              type="button"
               onClick={() => handleSelect(option)}
               className={`w-full text-left px-5 py-4 rounded-xl border transition-all ${
                 isMulti && selectedMulti.includes(option)
@@ -143,9 +173,9 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        {/* Multi-select continue button */}
         {isMulti && selectedMulti.length > 0 && (
           <button
+            type="button"
             onClick={handleMultiNext}
             className="w-full mt-6 px-6 py-3 bg-accent hover:bg-accent-hover text-white rounded-xl font-medium transition-colors"
           >
@@ -153,9 +183,9 @@ export default function OnboardingPage() {
           </button>
         )}
 
-        {/* Back button */}
         {step > 0 && (
           <button
+            type="button"
             onClick={() => setStep(step - 1)}
             className="w-full mt-3 px-6 py-3 text-muted hover:text-foreground transition-colors text-sm"
           >

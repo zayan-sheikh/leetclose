@@ -11,9 +11,14 @@ export interface TranscriptMessage {
 interface TranscriptProps {
   messages: TranscriptMessage[];
   isVisible: boolean;
+  prospectShortLabel?: string;
 }
 
-export default function Transcript({ messages, isVisible }: TranscriptProps) {
+export default function Transcript({
+  messages,
+  isVisible,
+  prospectShortLabel = "Prospect",
+}: TranscriptProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,12 +42,14 @@ export default function Transcript({ messages, isVisible }: TranscriptProps) {
                   : "bg-[#2a4a6a] text-white"
               }`}
             >
-              {msg.role === "user" ? "Y" : "S"}
+              {msg.role === "user"
+                ? "Y"
+                : prospectShortLabel.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
                 <span className="text-xs font-medium text-muted">
-                  {msg.role === "user" ? "You" : "Sarah"}
+                  {msg.role === "user" ? "You" : prospectShortLabel}
                 </span>
               </div>
               <p className="text-sm text-foreground/90 mt-0.5 leading-relaxed">

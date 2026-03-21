@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CloseArena — Practice Sales Calls Until Closing Feels Automatic",
+  title: "CloserArena AI — Practice Sales Calls Until Closing Feels Automatic",
   description:
-    "Train against a live AI prospect, handle real objections, and get better at closing high-ticket fitness coaching clients.",
+    "AI sales call simulator for online fitness coaches. Train against realistic prospects, objections, and closing — with feedback, XP, and streaks.",
 };
 
 export default function RootLayout({
