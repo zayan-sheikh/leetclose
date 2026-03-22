@@ -42,51 +42,61 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="page-mesh-bg opacity-45" aria-hidden />
       <DashboardNav />
-      <main className="max-w-2xl mx-auto px-4 py-10 space-y-8">
+      <main className="relative mx-auto max-w-2xl space-y-8 px-4 py-10">
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted text-sm mt-1">
-            MVP: profile is stored in your browser (localStorage).
+          <p className="label-overline">Account</p>
+          <h1 className="font-display mt-2 text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="mt-2 text-sm text-muted">
+            MVP: profile lives in your browser (localStorage).
           </p>
         </div>
 
-        <section className="bg-card border border-border rounded-2xl p-6">
-          <h2 className="font-semibold mb-3">Coaching profile JSON</h2>
-          <p className="text-sm text-muted mb-3">
+        <section className="card-premium p-6 pt-7">
+          <h2 className="font-display text-base font-semibold">Coaching profile JSON</h2>
+          <p className="mt-2 text-sm text-muted">
             Keys used by the AI: coachType, offerName, offerPrice, weakObjections, niche,
             closeRate, practiceTone.
           </p>
           <textarea
             value={profileJson}
             onChange={(e) => setProfileJson(e.target.value)}
-            className="w-full h-64 bg-background border border-border rounded-xl p-4 font-mono text-sm"
+            className="input-premium mt-4 h-64 resize-y font-mono text-xs leading-relaxed"
           />
-          <button
-            type="button"
-            onClick={saveProfile}
-            className="mt-3 px-5 py-2 bg-accent text-white rounded-lg text-sm font-medium"
-          >
-            Save profile
-          </button>
-          {saved && <span className="ml-3 text-sm text-success">Saved</span>}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={saveProfile}
+              className="btn-primary-glow rounded-xl px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Save profile
+            </button>
+            {saved && (
+              <span className="font-hud text-xs font-semibold uppercase tracking-wide text-emerald-400">
+                Saved
+              </span>
+            )}
+          </div>
         </section>
 
-        <section className="bg-card border border-border rounded-2xl p-6 space-y-3">
-          <h2 className="font-semibold">Danger zone</h2>
+        <section className="card-premium space-y-4 p-6 pt-7">
+          <h2 className="font-display text-base font-semibold text-amber-200/90">
+            Danger zone
+          </h2>
           <button
             type="button"
             onClick={resetProgress}
-            className="px-5 py-2 bg-warning/20 text-warning rounded-lg text-sm font-medium border border-warning/30"
+            className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/15"
           >
             Reset gamification
           </button>
           <button
             type="button"
             onClick={signOut}
-            className="block px-5 py-2 bg-danger/20 text-danger rounded-lg text-sm font-medium border border-danger/30"
+            className="block rounded-xl border border-rose-500/35 bg-rose-500/10 px-5 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:bg-rose-500/15"
           >
-            Sign out (clear session flags)
+            Sign out (clear session)
           </button>
         </section>
       </main>

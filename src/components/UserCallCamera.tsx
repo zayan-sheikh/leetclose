@@ -44,8 +44,8 @@ function drawFaceLandmarks(
 
   if (!landmarks?.length) return;
 
-  const rMain = Math.max(1.35, Math.min(vw, vh) * 0.00335);
-  const rFirst = rMain * 1.55;
+  const rMain = Math.max(0.9, Math.min(vw, vh) * 0.00205);
+  const rFirst = rMain * 1.35;
 
   for (let i = 0; i < landmarks.length; i++) {
     const lm = landmarks[i];
@@ -54,24 +54,24 @@ function drawFaceLandmarks(
     const r = i === 0 ? rFirst : rMain;
     ctx.beginPath();
     ctx.arc(px, py, r, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.92)";
-    ctx.lineWidth = Math.max(1.2, r * 0.4);
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.88)";
+    ctx.lineWidth = Math.max(0.65, r * 0.28);
     ctx.stroke();
     ctx.fillStyle = i === 0 ? "#fbbf24" : "#22d3ee";
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(px, py, r * 0.45, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.arc(px, py, r * 0.42, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
     ctx.fill();
   }
 
   const label = `${landmarks.length} pts`;
-  ctx.font = "bold 11px ui-monospace, monospace";
+  ctx.font = "bold 9px ui-monospace, monospace";
   const tw = ctx.measureText(label).width;
   ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-  ctx.fillRect(4, 2, tw + 10, 16);
+  ctx.fillRect(3, 2, tw + 8, 13);
   ctx.fillStyle = "#e0f2fe";
-  ctx.fillText(label, 9, 13);
+  ctx.fillText(label, 7, 11);
 }
 
 export interface PresenceReading {
@@ -413,8 +413,12 @@ export default function UserCallCamera({
   }, [enabled, notify]);
 
   return (
-    <div className="absolute bottom-4 right-4 w-[min(100%,13.5rem)] sm:w-56 rounded-lg border border-border bg-black overflow-hidden shadow-xl">
-      <div className="relative aspect-video bg-[#0d0d0d]">
+    <div className="absolute right-2 top-2 z-[2] w-[min(calc(100%-1rem),11.25rem)] overflow-hidden rounded-xl border border-white/[0.12] bg-[#070708] shadow-[0_16px_36px_-10px_rgba(0,0,0,0.8),0_0_0_1px_rgba(0,0,0,0.5)] ring-1 ring-white/[0.06] sm:right-3 sm:top-3 sm:w-[12rem]">
+      <div className="relative aspect-video bg-[#0a0a0c]">
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-white/[0.04]"
+          aria-hidden
+        />
         <video
           ref={videoRef}
           className="h-full w-full object-cover scale-x-[-1]"
@@ -427,51 +431,66 @@ export default function UserCallCamera({
           className="pointer-events-none absolute inset-0 h-full w-full object-cover scale-x-[-1]"
           aria-hidden
         />
+        <div className="pointer-events-none absolute left-2 top-2 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur-sm">
+          You
+        </div>
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-[10px] text-muted px-2 text-center">
-            Starting camera &amp; MediaPipe…
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/75 px-3 text-center backdrop-blur-sm">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
+            <span className="text-[10px] font-medium text-zinc-300">
+              Camera &amp; vision…
+            </span>
           </div>
         )}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-[10px] text-warning px-2 text-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/85 px-2 text-center text-[10px] leading-snug text-amber-200/95">
             {error}
           </div>
         )}
       </div>
-      <div className="px-2 py-1.5 bg-[#141414] space-y-1 border-t border-border">
-        <div className="flex items-center justify-between gap-1">
-          <span className="text-[10px] font-semibold text-foreground">You</span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowLandmarks((v) => !v)}
-              className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
-                showLandmarks
-                  ? "border-accent text-accent bg-accent/10"
-                  : "border-border text-muted hover:text-foreground"
-              }`}
-              title="Toggle MediaPipe face landmark dots (normalized mesh projected to pixels)"
-            >
-              Mesh
-            </button>
-            <span className="text-[9px] text-muted">
-              {isMuted ? "Mic off" : isListening ? "Listening" : "Mic on"}
-            </span>
-          </div>
+      <div className="space-y-1.5 border-t border-white/[0.08] bg-[#0c0c0e]/95 px-2.5 py-2 backdrop-blur-md">
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={`text-[10px] font-medium ${
+              isMuted ? "text-rose-300/90" : isListening ? "text-cyan-300/90" : "text-zinc-400"
+            }`}
+          >
+            {isMuted ? "Mic muted" : isListening ? "Listening" : "Mic on"}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowLandmarks((v) => !v)}
+            className={`rounded-md border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide transition-colors ${
+              showLandmarks
+                ? "border-cyan-400/45 bg-cyan-400/15 text-cyan-200"
+                : "border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300"
+            }`}
+            title="Face landmark overlay (on-device)"
+          >
+            Mesh
+          </button>
         </div>
         {reading && !error && (
           <>
-            <p className="text-[9px] leading-tight text-accent font-medium truncate" title={reading.expression}>
-              Face: {reading.expression}
+            <p
+              className="truncate text-[10px] font-medium leading-tight text-cyan-200/90"
+              title={reading.expression}
+            >
+              {reading.expression}
             </p>
-            <p className="text-[9px] leading-tight text-foreground/80 line-clamp-2" title={reading.posture}>
-              Body: {reading.posture}
+            <p
+              className="line-clamp-2 text-[9px] leading-snug text-zinc-400"
+              title={reading.posture}
+            >
+              {reading.posture}
             </p>
           </>
         )}
-        <p className="text-[8px] text-muted/80 leading-tight pt-0.5">
-          Expression = blendshape scores from MediaPipe Face Landmarker (not a separate emotion model).
-          Cyan dots = landmark (x,y) in video pixels. On-device only — not uploaded.
+        <p
+          className="border-t border-white/[0.06] pt-1.5 text-[8px] leading-tight text-zinc-600"
+          title="Blendshapes on-device; not uploaded."
+        >
+          On-device MediaPipe · not uploaded
         </p>
       </div>
     </div>

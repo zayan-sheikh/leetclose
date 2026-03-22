@@ -1,5 +1,5 @@
 import type { Persona } from "./personas";
-import { PERSONAS } from "./personas";
+import { isPersonaUnlocked } from "./personas";
 
 const PROGRESS_KEY = "closearena_progress";
 const LEADERBOARD_KEY = "closearena_leaderboard_entries";
@@ -16,6 +16,10 @@ export interface UserProgress {
   dailyChallengeDone: boolean;
   totalCalls: number;
   bestOverall: number;
+  /** Monday YYYY-MM-DD — weekly solo cup resets each week */
+  cupWeekStart: string | null;
+  /** Overall scores from scored calls this week (for cup / tournament-style tracking) */
+  cupRunScores: number[];
 }
 
 export const BADGE_DEFS: { id: string; label: string; description: string }[] = [
@@ -29,7 +33,23 @@ export const BADGE_DEFS: { id: string; label: string; description: string }[] = 
   { id: "xp_1k", label: "Grinder", description: "Earn 1,000 XP" },
 ];
 
-const LEVEL_THRESHOLDS = [0, 200, 500, 1000, 1800, 3000, 5000];
+export const LEVEL_THRESHOLDS = [0, 200, 500, 1000, 1800, 3000, 5000];
+
+const DIFFICULTY_ORDER: ("beginner" | "intermediate" | "advanced" | "killer")[] = [
+  "beginner",
+  "intermediate",
+  "advanced",
+  "killer",
+];
+
+function mondayLocalYYYYMMDD(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const m = new Date(d);
+  m.setDate(m.getDate() + diff);
+  return `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}-${String(m.getDate()).padStart(2, "0")}`;
+}
 
 export function levelFromXp(xp: number): number {
   let lv = 1;
@@ -40,6 +60,72 @@ export function levelFromXp(xp: number): number {
     }
   }
   return Math.min(lv, LEVEL_THRESHOLDS.length);
+}
+
+/** XP bar toward next level (or maxed at final tier). */
+export function levelProgress(xp: number): {
+  level: number;
+  xpIntoLevel: number;
+  xpForNext: number;
+  pct: number;
+  isMax: boolean;
+} {
+  const level = levelFromXp(xp);
+  const maxTier = LEVEL_THRESHOLDS.length;
+  if (level >= maxTier) {
+    const floor = LEVEL_THRESHOLDS[maxTier - 1];
+    return {
+      level,
+      xpIntoLevel: xp - floor,
+      xpForNext: 0,
+      pct: 100,
+      isMax: true,
+    };
+  }
+  const floor = LEVEL_THRESHOLDS[level - 1];
+  const ceil = LEVEL_THRESHOLDS[level];
+  const span = ceil - floor;
+  const into = xp - floor;
+  return {
+    level,
+    xpIntoLevel: into,
+    xpForNext: span,
+    pct: span > 0 ? Math.min(100, Math.round((into / span) * 100)) : 100,
+    isMax: false,
+  };
+}
+
+/** Solo weekly cup: average of your last 3 overall scores this week (needs 3+ runs). */
+export function weeklyCupStats(progress: UserProgress): {
+  runs: number;
+  avgLast3: number | null;
+  avgAll: number | null;
+} {
+  const scores = progress.cupRunScores ?? [];
+  if (scores.length === 0) return { runs: 0, avgLast3: null, avgAll: null };
+  const avgAll = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  if (scores.length < 3) return { runs: scores.length, avgLast3: null, avgAll };
+  const last3 = scores.slice(-3);
+  const avgLast3 = Math.round(last3.reduce((a, b) => a + b, 0) / 3);
+  return { runs: scores.length, avgLast3, avgAll };
+}
+
+export function difficultyLadder(progress: UserProgress): {
+  id: "beginner" | "intermediate" | "advanced" | "killer";
+  label: string;
+  unlocked: boolean;
+}[] {
+  const labels: Record<string, string> = {
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    killer: "Killer closer",
+  };
+  return DIFFICULTY_ORDER.map((id) => ({
+    id,
+    label: labels[id],
+    unlocked: progress.unlockedDifficulties.includes(id),
+  }));
 }
 
 function todayLocal(): string {
@@ -66,6 +152,8 @@ export function defaultProgress(): UserProgress {
     dailyChallengeDone: false,
     totalCalls: 0,
     bestOverall: 0,
+    cupWeekStart: null,
+    cupRunScores: [],
   };
 }
 
@@ -129,6 +217,16 @@ export function applyCallToProgress(
   }
   if (scores.overall >= 65) next.dailyChallengeDone = true;
 
+  const monday = mondayLocalYYYYMMDD();
+  if (next.cupWeekStart !== monday) {
+    next.cupWeekStart = monday;
+    next.cupRunScores = [];
+  }
+  next.cupRunScores = [...(next.cupRunScores ?? []), scores.overall];
+  if (next.cupRunScores.length > 12) {
+    next.cupRunScores = next.cupRunScores.slice(-12);
+  }
+
   const addBadge = (id: string) => {
     if (!next.badges.includes(id)) next.badges.push(id);
   };
@@ -144,13 +242,6 @@ export function applyCallToProgress(
   if (next.xp >= 1000) addBadge("xp_1k");
 
   if (scores.overall >= 72) {
-    PERSONAS.filter((p) => !p.unlockedByDefault).forEach((p) => {
-      if (!next.unlockedPersonaIds.includes(p.id)) {
-        if (scores.overall >= 85 || next.totalCalls >= 5) {
-          next.unlockedPersonaIds.push(p.id);
-        }
-      }
-    });
     if (!next.unlockedDifficulties.includes("intermediate")) next.unlockedDifficulties.push("intermediate");
   }
   if (scores.overall >= 82) {
@@ -215,6 +306,5 @@ export function rankLabel(level: number): string {
 }
 
 export function personaAllowed(p: Persona, progress: UserProgress): boolean {
-  if (p.unlockedByDefault) return true;
-  return progress.unlockedPersonaIds.includes(p.id);
+  return isPersonaUnlocked(p, progress);
 }

@@ -6,20 +6,23 @@ import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import CallTimer from "@/components/CallTimer";
 import Transcript, { TranscriptMessage } from "@/components/Transcript";
-import {
-  getAvailablePersonas,
-  getPersonaById,
-  type Persona,
-} from "@/lib/personas";
-import { TRAINING_MODES, type TrainingModeId } from "@/lib/modes";
+import { getPersonaById, PERSONAS, type Persona } from "@/lib/personas";
+import CallProblemPanel from "@/components/CallProblemPanel";
+import PersonaFace from "@/components/PersonaFace";
+import { TRAINING_MODES, getModeById, type TrainingModeId } from "@/lib/modes";
 import { getInitialMessageForPersona } from "@/lib/prospect-prompt";
-import { loadProgress, personaAllowed } from "@/lib/gamification";
+import { defaultProgress, loadProgress, personaAllowed } from "@/lib/gamification";
 
 const UserCallCamera = dynamic(() => import("@/components/UserCallCamera"), {
   ssr: false,
   loading: () => (
-    <div className="absolute bottom-4 right-4 w-56 aspect-video rounded-lg border border-border bg-[#1a1a1a] flex items-center justify-center text-[10px] text-muted px-2 text-center">
-      Loading camera…
+    <div className="absolute right-2 top-2 z-[2] flex w-[min(calc(100%-1rem),11.25rem)] flex-col overflow-hidden rounded-xl border border-white/[0.12] bg-[#070708] shadow-xl sm:right-3 sm:top-3 sm:w-[12rem]">
+      <div className="relative flex aspect-video items-center justify-center bg-[#0a0a0c]">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-400/25 border-t-cyan-400" />
+      </div>
+      <div className="border-t border-white/[0.08] px-2.5 py-2 text-center text-[10px] font-medium text-zinc-500">
+        Preparing your camera…
+      </div>
     </div>
   ),
 });
@@ -35,12 +38,13 @@ export default function CallPage() {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
   const [currentTranscript, setCurrentTranscript] = useState("");
-  const [personaId, setPersonaId] = useState<string>("sarah-busy-mom");
+  const [personaId, setPersonaId] = useState<string>("mason-vale");
   const [modeId, setModeId] = useState<TrainingModeId>("full_call");
   const [stripeSent, setStripeSent] = useState(false);
   const [sendingStripe, setSendingStripe] = useState(false);
   const [speechHint, setSpeechHint] = useState<string | null>(null);
   const [typedLine, setTypedLine] = useState("");
+  const [showSessionLog, setShowSessionLog] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesRef = useRef<TranscriptMessage[]>([]);
@@ -63,9 +67,14 @@ export default function CallPage() {
     messagesRef.current = messages;
   }, [messages]);
 
-  const progress = typeof window !== "undefined" ? loadProgress() : null;
-  const unlockedList = progress?.unlockedPersonaIds ?? [];
-  const roster: Persona[] = getAvailablePersonas(unlockedList);
+  useEffect(() => {
+    const valid = new Set(PERSONAS.map((p) => p.id));
+    const stored = localStorage.getItem("closearena_call_persona");
+    if (stored && valid.has(stored)) setPersonaId(stored);
+  }, []);
+
+  const progress =
+    typeof window !== "undefined" ? loadProgress() : defaultProgress();
 
   const getProfile = useCallback(() => {
     if (typeof window === "undefined") return {};
@@ -247,7 +256,9 @@ export default function CallPage() {
     const p = loadProgress();
     const persona = getPersonaById(personaId);
     if (!personaAllowed(persona, p)) {
-      alert("Unlock this prospect by scoring 72+ overall on a few calls.");
+      alert(
+        "This prospect unlocks as your best overall score and call count improve — check the dashboard for locked prospects."
+      );
       return;
     }
 
@@ -370,253 +381,380 @@ export default function CallPage() {
   }, [isMuted, startListening]);
 
   const activePersona = getPersonaById(personaId);
-  const prog = typeof window !== "undefined" ? loadProgress() : null;
+  const activeMode = getModeById(modeId);
 
   if (callState === "waiting") {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="border-b border-border px-4 py-3 flex justify-between items-center">
-          <Link href="/dashboard" className="text-sm text-muted hover:text-foreground">
-            ← Dashboard
+      <div className="relative flex min-h-screen flex-col bg-background">
+        <div className="page-mesh-bg opacity-50" aria-hidden />
+        <header className="relative z-[1] flex items-center justify-between border-b border-sky-500/20 bg-[#0f172a]/90 px-4 py-2.5 backdrop-blur-xl">
+          <Link
+            href="/dashboard"
+            className="font-hud text-xs font-medium uppercase tracking-wide text-sky-200/75 transition-colors hover:text-sky-100"
+          >
+            ← Problem list
           </Link>
-          <span className="text-xs text-muted">CloserArena AI</span>
-        </div>
-        <div className="max-w-3xl mx-auto px-4 py-10">
-          <h1 className="text-2xl font-bold mb-2">Practice call setup</h1>
-          <p className="text-muted text-sm mb-8">
-            Pick a prospect and training mode. Mic + speakers on — Chrome recommended.
-          </p>
+          <span className="font-display text-xs font-semibold tracking-wide text-zinc-100">
+            CloserArena <span className="text-sky-400/55">·</span>{" "}
+            <span style={{ color: "#ffa116" }} className="font-mono">
+              practice
+            </span>
+          </span>
+          <span className="w-20 text-right font-hud text-[10px] text-sky-300/50">Beta</span>
+        </header>
 
-          <label className="block text-sm font-medium mb-2">Training mode</label>
-          <select
-            value={modeId}
-            onChange={(e) => setModeId(e.target.value as TrainingModeId)}
-            className="w-full bg-card border border-border rounded-xl px-4 py-3 mb-8 text-sm"
-          >
-            {TRAINING_MODES.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-muted -mt-6 mb-8">
-            {TRAINING_MODES.find((m) => m.id === modeId)?.description}
-          </p>
+        <div className="relative z-[1] flex min-h-0 flex-1 flex-col lg:flex-row">
+          <aside className="flex max-h-[min(48vh,420px)] min-h-0 shrink-0 flex-col border-b border-white/10 lg:max-h-none lg:w-[min(44vw,30rem)] lg:border-b-0 lg:border-r lg:border-white/10">
+            <CallProblemPanel persona={activePersona} mode={activeMode} variant="setup" />
+          </aside>
 
-          <h2 className="text-sm font-semibold mb-3">Prospect</h2>
-          <div className="grid sm:grid-cols-2 gap-3 mb-8">
-            {roster.map((p) => {
-              const allowed = prog ? personaAllowed(p, prog) : p.unlockedByDefault;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={!allowed}
-                  onClick={() => allowed && setPersonaId(p.id)}
-                  className={`text-left rounded-xl border p-4 transition-colors ${
-                    personaId === p.id
-                      ? "border-accent bg-accent/10"
-                      : "border-border bg-card hover:bg-card-hover"
-                  } ${!allowed ? "opacity-40 cursor-not-allowed" : ""}`}
-                >
-                  <div className="font-medium">{p.displayName}</div>
-                  <div className="text-xs text-muted mt-1">{p.nicheGoal}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-muted mt-2">
-                    {p.objectionDifficulty} · {!allowed ? "Locked" : "Ready"}
-                  </div>
-                </button>
-              );
-            })}
+          <div className="relative min-h-0 flex-1 overflow-y-auto">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.35]"
+              style={{
+                backgroundImage: `radial-gradient(circle at 20% 30%, rgba(255,255,255,0.12) 0%, transparent 45%),
+                  radial-gradient(circle at 80% 70%, rgba(56,189,248,0.14) 0%, transparent 40%)`,
+              }}
+              aria-hidden
+            />
+            <div className="relative mx-auto max-w-xl px-4 py-6 lg:px-8 lg:py-8">
+              <p className="font-hud text-[10px] font-semibold uppercase tracking-widest text-sky-200/65">
+                Code editor
+              </p>
+              <h1 className="font-display mt-1 text-2xl font-bold tracking-tight text-white">
+                Pick your opponent
+              </h1>
+              <p className="mt-2 text-sm text-sky-100/60">
+                Mic + speakers on · Chrome recommended for voice
+              </p>
+
+              <label className="mb-2 mt-8 block font-hud text-[10px] font-semibold uppercase tracking-wider text-sky-200/55">
+                Language / Mode
+              </label>
+              <select
+                value={modeId}
+                onChange={(e) => setModeId(e.target.value as TrainingModeId)}
+                className="w-full rounded-xl border border-white/15 bg-black/25 py-3 pl-3 pr-8 text-sm text-white shadow-inner backdrop-blur-md focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+              >
+                {TRAINING_MODES.map((m) => (
+                  <option key={m.id} value={m.id} className="bg-[#111c2e]">
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-sky-100/50">{activeMode.description}</p>
+
+              <h2 className="mb-3 mt-8 font-hud text-[10px] font-semibold uppercase tracking-wider text-sky-200/55">
+                Opponents
+              </h2>
+              <div className="flex flex-col gap-2.5">
+                {PERSONAS.map((p) => {
+                  const allowed = personaAllowed(p, progress);
+                  const selected = personaId === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={!allowed}
+                      onClick={() => allowed && setPersonaId(p.id)}
+                      className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left shadow-sm transition-all ${
+                        selected
+                          ? "border-sky-400/50 bg-white/15 ring-2 ring-sky-400/35 backdrop-blur-md"
+                          : "border-white/10 bg-black/20 backdrop-blur-md hover:border-sky-400/30 hover:bg-white/10"
+                      } ${!allowed ? "cursor-not-allowed opacity-45" : ""}`}
+                    >
+                      <PersonaFace personaId={p.id} displayName={p.displayName} size={48} />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-display text-sm font-bold text-white">{p.displayName}</div>
+                        <div className="truncate text-xs text-sky-100/55">{p.nicheGoal}</div>
+                      </div>
+                      <div className="shrink-0 text-right font-hud text-[10px] uppercase tracking-wide text-sky-200/60">
+                        {p.objectionDifficulty}
+                        <br />
+                        {!allowed ? (
+                          <span title="Unlock via dashboard progress">
+                            {p.unlockMinOverall != null
+                              ? `${p.unlockMinOverall}+ · ${p.unlockMinCalls ?? 0} calls`
+                              : "Locked"}
+                          </span>
+                        ) : (
+                          "Ready"
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 flex items-center gap-3 rounded-xl border border-white/12 bg-black/25 p-4 backdrop-blur-md">
+                <PersonaFace personaId={activePersona.id} displayName={activePersona.displayName} size={44} />
+                <div className="min-w-0">
+                  <p className="font-hud text-[10px] font-semibold uppercase tracking-wider text-sky-200/50">
+                    Selected
+                  </p>
+                  <p className="text-sm font-semibold text-white">{activePersona.displayName}</p>
+                  <p className="text-xs text-sky-100/55">{activePersona.personalityType}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={startCall}
+                className="mt-8 w-full rounded-xl bg-[#2cbb5d] py-3.5 text-sm font-bold text-white shadow-[0_0_32px_-6px_rgba(44,187,93,0.55)] transition-all hover:brightness-110 active:scale-[0.99] sm:py-4 sm:text-base"
+              >
+                Submit — Join call
+              </button>
+            </div>
           </div>
-
-          <div className="bg-card border border-border rounded-xl p-4 text-sm text-muted mb-8">
-            <strong className="text-foreground">Selected:</strong>{" "}
-            {activePersona.displayName} — {activePersona.personalityType}
-          </div>
-
-          <button
-            type="button"
-            onClick={startCall}
-            className="w-full py-4 bg-success hover:bg-success/90 text-white rounded-xl font-semibold text-lg"
-          >
-            Join call
-          </button>
         </div>
       </div>
     );
   }
 
+  const modeLabel = activeMode.label;
+
   return (
-    <div className="h-screen bg-[#0a0a0a] flex flex-col">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#111]">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-xs text-muted hover:text-foreground">
-            Exit
-          </Link>
-          <span className="text-sm font-medium">CloserArena</span>
-          <span className="text-xs text-muted">|</span>
-          <span className="text-xs text-muted truncate max-w-[120px]">
-            {activePersona.firstName}
+    <div className="flex h-screen flex-col bg-background">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-sky-500/20 bg-[#0f172a]/95 px-3 py-2 backdrop-blur-xl sm:px-4">
+        <Link
+          href="/dashboard"
+          className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-medium text-sky-100/85 transition-colors hover:border-sky-400/35 hover:text-white"
+        >
+          ← Leave
+        </Link>
+        <div className="hidden min-w-0 flex-1 items-center gap-2 px-2 text-xs sm:flex">
+          <span className="text-zinc-600">/</span>
+          <span className="truncate font-mono text-[11px] text-sky-200/75">
+            problems / {activeMode.id}
           </span>
         </div>
-        <CallTimer isActive={callState === "active"} startTime={callStartTime} />
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowTranscript(!showTranscript)}
-            className={`p-2 rounded-lg text-sm transition-colors ${
-              showTranscript
-                ? "bg-accent/20 text-accent"
-                : "text-muted hover:text-foreground"
-            }`}
-            title="Toggle transcript"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
+        <span className="font-display shrink-0 text-[11px] font-semibold text-zinc-400 sm:hidden">
+          Live
+        </span>
+      </header>
 
-      <div className="flex-1 flex min-h-0">
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 relative">
-            <Avatar
-              isTalking={isAiTalking}
-              isListening={isListening}
-              displayName={activePersona.displayName}
-              avatarTone={activePersona.avatarTone}
-            />
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside className="flex max-h-[min(40vh,320px)] min-h-0 shrink-0 border-b border-white/10 lg:max-h-none lg:w-[min(42vw,30rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:border-white/10">
+          <CallProblemPanel persona={activePersona} mode={activeMode} variant="active" />
+        </aside>
 
-            <UserCallCamera
-              enabled={callState === "active"}
-              isListening={isListening}
-              isMuted={isMuted}
-            />
-
-            {currentTranscript && (
-              <div className="absolute bottom-4 left-4 right-[15rem] sm:right-[15.5rem] bg-black/70 rounded-lg px-4 py-2">
-                <p className="text-sm text-white/90">{currentTranscript}...</p>
-              </div>
-            )}
-          </div>
-
-          {speechHint && (
-            <div className="bg-[#111] border-t border-border px-4 py-2">
-              <p className="text-xs text-warning text-center max-w-2xl mx-auto leading-snug">
-                {speechHint}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#0f0815]">
+          {/* Toolbar */}
+          <div className="flex shrink-0 flex-col gap-1.5 border-b border-white/10 bg-[#111c2e] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="shrink-0 rounded bg-sky-600/40 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-sky-50">
+                Live
+              </span>
+              <span className="hidden font-mono text-[11px] text-zinc-500 sm:inline">{modeLabel}</span>
+              <p className="w-full text-[10px] leading-snug text-zinc-500 sm:w-auto sm:max-w-[20rem]">
+                <span className="text-sky-300/85">Objections:</span> happen in the live call (voice +
+                transcript). Likely lines are under{" "}
+                <span className="text-zinc-400">Problem → Constraints</span>.
               </p>
             </div>
-          )}
-
-          <div className="bg-[#111] px-4 py-2 flex flex-wrap items-center gap-2 justify-center border-t border-border/60">
-            <input
-              type="text"
-              value={typedLine}
-              onChange={(e) => setTypedLine(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendTypedReply();
-                }
-              }}
-              placeholder="Type reply if mic / network fails…"
-              disabled={isAiTalking}
-              className="flex-1 min-w-[12rem] max-w-md px-3 py-2 rounded-lg bg-[#1a1a1a] border border-border text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent disabled:opacity-50"
-            />
-            <button
-              type="button"
-              onClick={sendTypedReply}
-              disabled={!typedLine.trim() || isAiTalking}
-              className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-sm font-medium"
-            >
-              Send
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <CallTimer isActive={callState === "active"} startTime={callStartTime} />
+              <button
+                type="button"
+                onClick={() => setShowTranscript(!showTranscript)}
+                className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+                  showTranscript
+                    ? "border-sky-400/45 bg-sky-500/15 text-sky-100"
+                    : "border-white/10 bg-black/20 text-zinc-400 hover:border-white/20"
+                }`}
+              >
+                Transcript
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSessionLog((v) => !v)}
+                className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+                  showSessionLog
+                    ? "border-amber-400/40 bg-amber-500/10 text-amber-100"
+                    : "border-white/10 bg-black/20 text-zinc-400 hover:border-white/20"
+                }`}
+              >
+                Session log
+              </button>
+            </div>
           </div>
 
-          <div className="bg-[#111] px-4 py-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={toggleMute}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                isMuted
-                  ? "bg-danger text-white"
-                  : "bg-[#2a2a2a] text-white hover:bg-[#3a3a3a]"
-              }`}
-              title={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+          {/* Center column + right transcript */}
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              {/* Call stage */}
+              <div className="relative min-h-0 flex-1 p-2 sm:p-3">
+                <div className="relative h-full min-h-[160px] overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-[#132238] via-[#0f172a] to-[#0a0f18] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-sky-500/15"
+                    aria-hidden
                   />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                  <Avatar
+                    isTalking={isAiTalking}
+                    isListening={isListening}
+                    displayName={activePersona.displayName}
+                    avatarTone={activePersona.avatarTone}
                   />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+
+                  <UserCallCamera
+                    enabled={callState === "active"}
+                    isListening={isListening}
+                    isMuted={isMuted}
                   />
-                </svg>
+
+                  {currentTranscript && (
+                    <div className="absolute bottom-4 left-3 right-3 z-[1] max-w-[min(100%,28rem)] sm:bottom-5 sm:left-4">
+                      <div className="rounded-lg border border-sky-400/35 bg-black/75 px-3 py-2 shadow-lg backdrop-blur-md">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-300/90">
+                          You (draft)
+                        </p>
+                        <p className="mt-0.5 text-sm leading-snug text-zinc-100">
+                          {currentTranscript}
+                          <span className="text-sky-300/80">…</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Optional bottom: mic / voice diagnostics (LeetCode “test result” style) */}
+              {showSessionLog && (
+                <div className="flex max-h-[200px] min-h-[120px] shrink-0 flex-col border-t border-white/10 bg-[#0f172a]">
+                  <div className="shrink-0 border-b border-white/10 px-3 py-1.5 font-hud text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                    Session log
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto p-3 text-left">
+                    {speechHint ? (
+                      <p className="text-sm leading-relaxed text-amber-200/95">{speechHint}</p>
+                    ) : (
+                      <p className="font-mono text-xs text-zinc-500">
+                        No voice warnings. If the mic or network fails, details show here.
+                      </p>
+                    )}
+                    <div className="mt-3 space-y-1 border-t border-white/10 pt-2 font-mono text-[11px] text-zinc-500">
+                      <p>
+                        <span className="text-sky-400/85">$</span> mic_status:{" "}
+                        {isMuted ? "muted" : isListening ? "listening" : "idle"}
+                      </p>
+                      <p>
+                        <span className="text-sky-400/85">$</span> prospect:{" "}
+                        {activePersona.firstName}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
 
-            <button
-              type="button"
-              onClick={sendStripeLink}
-              disabled={stripeSent || sendingStripe}
-              className={`px-4 py-3 rounded-full text-sm font-semibold transition-colors ${
-                stripeSent
-                  ? "bg-success/30 text-success border border-success/40"
-                  : "bg-[#635bff] hover:bg-[#5349e8] text-white"
-              } disabled:opacity-50`}
-            >
-              {stripeSent ? "Link sent" : sendingStripe ? "Sending…" : "Send Stripe link"}
-            </button>
+              {/* Input dock */}
+              <div className="shrink-0 border-t border-white/10 bg-[#111c2e]/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:px-5">
+                {speechHint && (
+                  <div className="mb-3 rounded-xl border border-amber-500/25 bg-amber-950/25 px-3 py-2">
+                    <p className="text-center text-[11px] leading-relaxed text-amber-100/90">
+                      {speechHint}
+                    </p>
+                  </div>
+                )}
 
-            <button
-              type="button"
-              onClick={endCall}
-              className="px-6 py-3 bg-danger hover:bg-danger/90 text-white rounded-full font-medium transition-colors flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"
+                <div className="mb-3 flex flex-wrap items-stretch gap-2 sm:items-center">
+                  <input
+                    type="text"
+                    value={typedLine}
+                    onChange={(e) => setTypedLine(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendTypedReply();
+                      }
+                    }}
+                    placeholder="Type a reply…"
+                    disabled={isAiTalking}
+                    className="min-h-[42px] min-w-0 flex-1 rounded-xl border border-white/10 bg-[#121214] px-3.5 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-cyan-400/40 focus:outline-none focus:ring-1 focus:ring-cyan-400/25 disabled:opacity-45"
+                  />
+                  <button
+                    type="button"
+                    onClick={sendTypedReply}
+                    disabled={!typedLine.trim() || isAiTalking}
+                    className="btn-primary-glow min-h-[42px] shrink-0 rounded-xl px-5 text-sm font-semibold text-white disabled:opacity-40"
+                  >
+                    Send
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={toggleMute}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-all ${
+                      isMuted
+                        ? "bg-rose-600 text-white shadow-[0_0_28px_-6px_rgba(225,29,72,0.55)] ring-2 ring-rose-400/30"
+                        : "bg-[#1c1c21] text-white ring-1 ring-white/12 hover:bg-[#25252c] hover:ring-sky-400/30"
+                    }`}
+                    title={isMuted ? "Unmute microphone" : "Mute microphone"}
+                  >
+                    {isMuted ? (
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                        />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={sendStripeLink}
+                    disabled={stripeSent || sendingStripe}
+                    className={`min-h-12 shrink-0 rounded-full px-4 text-sm font-semibold transition-all sm:px-5 ${
+                      stripeSent
+                        ? "border border-emerald-400/35 bg-emerald-500/15 text-emerald-200"
+                        : "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-[0_0_28px_-8px_rgba(14,165,233,0.45)] hover:brightness-110"
+                    } disabled:opacity-50`}
+                  >
+                    {stripeSent ? "Stripe sent" : sendingStripe ? "Sending…" : "Send Stripe link"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={endCall}
+                    title="End call — save results & feedback"
+                    className="min-h-12 shrink-0 rounded-lg border border-rose-500/35 bg-gradient-to-r from-rose-600 to-red-600 px-3 py-2 text-xs font-semibold text-white shadow-[0_0_18px_-6px_rgba(248,113,113,0.4)] transition-all hover:brightness-110 sm:px-4 sm:text-sm"
+                  >
+                    End call
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {showTranscript && (
+              <aside className="flex h-[min(36vh,16rem)] min-h-0 w-full shrink-0 flex-col border-t border-white/10 bg-[#0c1524] lg:h-auto lg:w-[min(100%,17rem)] lg:max-w-[17rem] lg:border-l lg:border-t-0 xl:w-72 xl:max-w-[18rem]">
+                <Transcript
+                  messages={messages}
+                  isVisible={showTranscript}
+                  prospectShortLabel={activePersona.firstName}
                 />
-              </svg>
-              End call
-            </button>
+              </aside>
+            )}
           </div>
         </div>
-
-        {showTranscript && (
-          <div className="w-80 border-l border-border bg-[#111] flex-shrink-0">
-            <Transcript
-              messages={messages}
-              isVisible={showTranscript}
-              prospectShortLabel={activePersona.firstName}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

@@ -18,17 +18,23 @@ import {
 import { getPersonaById } from "@/lib/personas";
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
-  const color =
-    score >= 70 ? "bg-success" : score >= 40 ? "bg-warning" : "bg-danger";
+  const bar =
+    score >= 70
+      ? "bg-gradient-to-r from-emerald-600 to-cyan-500 shadow-[0_0_16px_-4px_rgba(52,211,153,0.45)]"
+      : score >= 40
+        ? "bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_14px_-4px_rgba(251,191,36,0.35)]"
+        : "bg-gradient-to-r from-rose-600 to-orange-500 shadow-[0_0_14px_-4px_rgba(248,113,113,0.35)]";
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-sm">
-        <span className="text-foreground/80">{label}</span>
-        <span className="font-medium">{score}</span>
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between text-sm">
+        <span className="text-zinc-400">{label}</span>
+        <span className="font-hud tabular-nums text-sm font-semibold text-zinc-100">
+          {score}
+        </span>
       </div>
-      <div className="h-2 bg-border rounded-full overflow-hidden">
+      <div className="h-2 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-inset ring-white/[0.05]">
         <div
-          className={`h-full rounded-full transition-all duration-1000 ${color}`}
+          className={`h-full rounded-full transition-all duration-1000 ${bar}`}
           style={{ width: `${score}%` }}
         />
       </div>
@@ -68,13 +74,14 @@ export default function FeedbackPage() {
 
   if (!callData || !analysis) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
+      <div className="relative flex min-h-screen items-center justify-center bg-background">
+        <div className="page-mesh-bg opacity-50" aria-hidden />
+        <div className="relative text-center">
           <p className="text-muted">No call data found.</p>
           <button
             type="button"
             onClick={() => router.push("/call")}
-            className="px-6 py-2 bg-accent text-white rounded-lg"
+            className="btn-primary-glow mt-5 rounded-xl px-6 py-2.5 text-sm font-semibold text-white"
           >
             Start a call
           </button>
@@ -90,35 +97,45 @@ export default function FeedbackPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b border-border px-4 py-3 flex justify-between items-center">
-        <Link href="/dashboard" className="text-sm text-muted hover:text-foreground">
+      <div className="page-mesh-bg opacity-40" aria-hidden />
+      <header className="relative flex items-center justify-between border-b border-white/[0.06] bg-[#09090b]/85 px-4 py-3 backdrop-blur-xl">
+        <Link
+          href="/dashboard"
+          className="text-sm text-muted transition-colors hover:text-cyan-300"
+        >
           ← Dashboard
         </Link>
-        <span className="text-xs text-muted">Results</span>
-      </div>
+        <span className="font-hud text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+          Session report
+        </span>
+      </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Call results</h1>
-          <p className="text-muted">
-            {minutes}m {seconds}s · {callData.messages.filter((m) => m.role === "user").length}{" "}
-            coach turns · vs {prospectLabel}
+      <div className="relative mx-auto max-w-3xl px-4 py-8">
+        <div className="mb-8 text-center">
+          <p className="label-overline">Debrief</p>
+          <h1 className="font-display mt-2 text-3xl font-bold tracking-tight">Call results</h1>
+          <p className="mt-2 text-sm text-muted">
+            {minutes}m {seconds}s ·{" "}
+            {callData.messages.filter((m) => m.role === "user").length} coach turns · vs{" "}
+            {prospectLabel}
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-8 text-center mb-6">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full border-4 border-accent mb-4">
-            <span className="text-3xl font-bold">{scores.overall}</span>
+        <div className="card-premium mb-6 p-8 pt-9 text-center">
+          <div className="mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-full border-2 border-cyan-400/35 bg-gradient-to-b from-cyan-500/10 to-transparent shadow-[0_0_40px_-12px_var(--glow-cyan)]">
+            <span className="font-display text-4xl font-bold text-white">{scores.overall}</span>
           </div>
-          <p className="text-muted text-sm">Overall score</p>
-          <p className="text-lg font-medium mt-1">
+          <p className="font-hud text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+            Overall score
+          </p>
+          <p className="mt-2 text-base font-medium text-zinc-200">
             Modeled close probability:{" "}
-            <span className="text-accent">{scores.closeProbability}%</span>
+            <span className="text-cyan-400">{scores.closeProbability}%</span>
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6 space-y-4">
-          <h2 className="font-semibold mb-2">Score breakdown</h2>
+        <div className="card-premium mb-6 space-y-4 p-6 pt-7">
+          <h2 className="font-display text-base font-semibold">Score breakdown</h2>
           <ScoreBar label="Rapport" score={scores.rapport} />
           <ScoreBar label="Discovery depth" score={scores.discovery} />
           <ScoreBar label="Pain extraction" score={scores.painExtraction} />
@@ -131,29 +148,33 @@ export default function FeedbackPage() {
           <ScoreBar label="Payment ask timing" score={scores.paymentTiming} />
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <h2 className="font-semibold text-accent mb-2">AI coach summary</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed">{feedback.coachSummary}</p>
-          <div className="mt-4 p-4 rounded-xl bg-accent/10 border border-accent/20">
-            <p className="text-xs font-semibold text-accent uppercase tracking-wide mb-1">
+        <div className="card-premium mb-6 p-6 pt-7">
+          <h2 className="font-display text-base font-semibold text-cyan-300/95">AI coach summary</h2>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-300">{feedback.coachSummary}</p>
+          <div className="mt-5 rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-4">
+            <p className="font-hud text-[10px] font-semibold uppercase tracking-wider text-cyan-400/90">
               Suggested retry challenge
             </p>
-            <p className="text-sm">{feedback.retryChallenge}</p>
+            <p className="mt-1.5 text-sm text-zinc-200">{feedback.retryChallenge}</p>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="font-semibold text-success mb-3">What you did well</h2>
-            <ul className="space-y-2 text-sm text-foreground/80">
+        <div className="mb-6 grid gap-4 md:grid-cols-2">
+          <div className="card-premium p-6 pt-7">
+            <h2 className="font-display text-base font-semibold text-emerald-400/95">
+              What you did well
+            </h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
               {feedback.didWell.map((item, i) => (
                 <li key={i}>• {item}</li>
               ))}
             </ul>
           </div>
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="font-semibold text-warning mb-3">What to improve</h2>
-            <ul className="space-y-2 text-sm text-foreground/80">
+          <div className="card-premium p-6 pt-7">
+            <h2 className="font-display text-base font-semibold text-amber-400/95">
+              What to improve
+            </h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
               {feedback.missed.map((item, i) => (
                 <li key={i}>• {item}</li>
               ))}
@@ -162,9 +183,9 @@ export default function FeedbackPage() {
         </div>
 
         {feedback.momentsAtRisk.length > 0 && (
-          <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-            <h2 className="font-semibold mb-3">Moments where you may have lost momentum</h2>
-            <ul className="space-y-2 text-sm text-foreground/80">
+          <div className="card-premium mb-6 p-6 pt-7">
+            <h2 className="font-display text-base font-semibold">Momentum risks</h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
               {feedback.momentsAtRisk.map((item, i) => (
                 <li key={i}>• {item}</li>
               ))}
@@ -173,9 +194,9 @@ export default function FeedbackPage() {
         )}
 
         {feedback.objectionsMishandled.length > 0 && (
-          <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-            <h2 className="font-semibold mb-3">Objections to tighten up</h2>
-            <ul className="space-y-2 text-sm text-foreground/80">
+          <div className="card-premium mb-6 p-6 pt-7">
+            <h2 className="font-display text-base font-semibold">Objections to tighten</h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
               {feedback.objectionsMishandled.map((item, i) => (
                 <li key={i}>• {item}</li>
               ))}
@@ -183,11 +204,11 @@ export default function FeedbackPage() {
           </div>
         )}
 
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <h2 className="font-semibold mb-3">Better lines to steal</h2>
-          <ul className="space-y-2 text-sm text-foreground/80">
+        <div className="card-premium mb-6 p-6 pt-7">
+          <h2 className="font-display text-base font-semibold">Better lines to steal</h2>
+          <ul className="mt-3 space-y-2 text-sm text-zinc-400">
             {feedback.betterResponses.map((item, i) => (
-              <li key={i} className="italic">
+              <li key={i} className="italic text-zinc-300">
                 “{item}”
               </li>
             ))}
@@ -195,52 +216,57 @@ export default function FeedbackPage() {
         </div>
 
         {feedback.tips.length > 0 && (
-          <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-            <h2 className="font-semibold mb-3">Pro tips</h2>
-            <ul className="space-y-2 text-sm text-foreground/80">
+          <div className="card-premium mb-6 p-6 pt-7">
+            <h2 className="font-display text-base font-semibold">Pro tips</h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
               {feedback.tips.map((tip, i) => (
-                <li key={i}>💡 {tip}</li>
+                <li key={i}>
+                  <span className="text-cyan-500/90">▸</span> {tip}
+                </li>
               ))}
             </ul>
           </div>
         )}
 
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <h2 className="font-semibold mb-4">Transcript</h2>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="card-premium mb-6 p-6 pt-7">
+          <h2 className="font-display mb-4 text-base font-semibold">Transcript</h2>
+          <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
             {callData.messages.map((msg, i) => (
               <div key={i} className="flex gap-3">
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    msg.role === "user" ? "bg-accent text-white" : "bg-[#2a4a6a] text-white"
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                    msg.role === "user"
+                      ? "bg-gradient-to-br from-cyan-600 to-indigo-600 text-white"
+                      : "border border-white/10 bg-white/5 text-zinc-300"
                   }`}
                 >
                   {msg.role === "user" ? "Y" : prospectLabel.charAt(0)}
                 </div>
-                <div>
-                  <span className="text-xs text-muted">
+                <div className="min-w-0">
+                  <span className="font-hud text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
                     {msg.role === "user" ? "You" : prospectLabel}
                   </span>
-                  <p className="text-sm text-foreground/90">{msg.content}</p>
+                  <p className="text-sm text-zinc-300">{msg.content}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 mb-8">
-          <h2 className="font-semibold mb-3">Badges &amp; XP</h2>
-          <p className="text-sm text-muted mb-3">
-            +XP applied. Level {progress.level} · {progress.xp.toLocaleString()} XP ·{" "}
+        <div className="card-premium mb-8 p-6 pt-7">
+          <h2 className="font-display text-base font-semibold">Badges &amp; XP</h2>
+          <p className="mt-2 text-sm text-muted">
+            +XP applied · Level {progress.level} ·{" "}
+            <span className="font-hud text-zinc-300">{progress.xp.toLocaleString()} XP</span> ·{" "}
             {progress.streak} day streak
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {progress.badges.map((id) => {
               const b = BADGE_DEFS.find((x) => x.id === id);
               return (
                 <span
                   key={id}
-                  className="text-xs px-3 py-1 rounded-full bg-accent/15 text-accent border border-accent/30"
+                  className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200/95"
                   title={b?.description}
                 >
                   {b?.label ?? id}
@@ -253,18 +279,18 @@ export default function FeedbackPage() {
           </div>
         </div>
 
-        <div className="flex gap-3 justify-center flex-wrap">
+        <div className="flex flex-wrap justify-center gap-3">
           <button
             type="button"
             onClick={() => router.push("/call")}
-            className="px-6 py-3 bg-accent hover:bg-accent-hover text-white rounded-xl font-medium"
+            className="btn-primary-glow rounded-xl px-6 py-3 text-sm font-semibold text-white"
           >
             Practice again
           </button>
           <button
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="px-6 py-3 bg-card border border-border rounded-xl font-medium"
+            className="btn-secondary rounded-xl px-6 py-3 text-sm"
           >
             Dashboard
           </button>

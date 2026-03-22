@@ -1,3 +1,10 @@
+import type { UserProgress } from "./gamification";
+
+/**
+ * Tiered practice cast (levels 1–5). Long character briefs live in product docs;
+ * here we store only what the AI + UI need. `practiceObjectives` / `practiceConstraints`
+ * power the problem panel — they are not pasted wholesale into the API.
+ */
 export interface Persona {
   id: string;
   displayName: string;
@@ -13,328 +20,294 @@ export interface Persona {
   urgencyLevel: "low" | "medium" | "high";
   trustLevel: "low" | "medium" | "high";
   personalityType: string;
-  /** Default personas available without XP unlock */
   unlockedByDefault: boolean;
   objectionDifficulty: "beginner" | "intermediate" | "advanced" | "killer";
-  /** Avatar color hint for UI */
   avatarTone: "warm" | "neutral" | "cool" | "deep";
   initialGreeting: string;
+  /** Coach-facing goals for this matchup (problem panel → Objectives) */
+  practiceObjectives: string[];
+  /** Tactical / behavioral notes for the rep (problem panel → Constraints) */
+  practiceConstraints: string[];
+  /** e.g. Open buyer — one-line behavioral label */
+  archetypeLabel: string;
+  /** 1 (easiest cooperation) … 5 (most demanding) */
+  trainingTier: 1 | 2 | 3 | 4 | 5;
+  /** Unlock when best overall score and call count reach these (skill gates) */
+  unlockMinOverall?: number;
+  unlockMinCalls?: number;
 }
 
 export const PERSONAS: Persona[] = [
   {
-    id: "sarah-busy-mom",
-    displayName: "Sarah Mitchell",
-    firstName: "Sarah",
-    age: 34,
-    nicheGoal: "Lose fat, regain energy after kids",
+    id: "mason-vale",
+    displayName: "Mason Vale",
+    firstName: "Mason",
+    age: 32,
+    archetypeLabel: "Open buyer",
+    trainingTier: 1,
+    nicheGoal: "handle inbound volume without leads slipping",
     backgroundStory:
-      "Marketing manager and mother of two. Gained weight after second pregnancy, gym membership fizzled, tried an online program alone and quit.",
+      "Online coach / creator with real traction: more DMs and leads than before, but you are still managing conversations yourself. Backend systems are not keeping up; opportunities slip when you are busy. Demand is not the problem — bandwidth and follow-through are.",
     painPoints: [
-      "Low energy affecting work",
-      "Embarrassment about body",
-      "No time with kids + career",
-      "Guilt spending on self",
+      "Too much volume, not enough time to reply consistently",
+      "Leads slip through the cracks during busy weeks",
+      "No real system — patching with manual DMs and reminders",
+      "Growth feels chaotic even though revenue is up",
     ],
-    buyingResistance: ["Price vs family budget", "Skeptical of online coaching", "Fear of failing again"],
+    buyingResistance: [
+      "Will it still sound like me and not robotic?",
+      "How much do I have to set up on my side?",
+    ],
     likelyObjections: [
-      "That's more than I expected",
-      "I need to talk to my husband",
-      "I don't know if I have time",
-      "I've tried programs before",
+      "I need to make sure my brand voice stays mine",
+      "What do you need from me for this to work?",
+      "What kind of results are normal?",
+      "Walk me through what happens next",
     ],
-    emotionalTriggers: ["Being heard", "Small wins", "Accountability without judgment"],
-    budgetSensitivity: "high",
-    urgencyLevel: "medium",
+    emotionalTriggers: [
+      "Not wasting momentum",
+      "Relief from chaos",
+      "Trust that nothing important gets dropped",
+    ],
+    budgetSensitivity: "medium",
+    urgencyLevel: "high",
     trustLevel: "medium",
-    personalityType: "Friendly, guarded, opens up with good questions",
+    personalityType:
+      "Open, cooperative, practical objections only — answers clearly if you ask decent questions; light redirect if you pitch too early, not hostile",
     unlockedByDefault: true,
     objectionDifficulty: "beginner",
     avatarTone: "warm",
-    initialGreeting: "Hey! Yeah, I can hear you. How's it going?",
+    initialGreeting:
+      "Hey — yeah, I can hear you. Honestly I jumped on because things are picking up and I need help handling the volume before more leads slip.",
+    practiceObjectives: [
+      "Quantify inbound volume, where leads die, and cost of a missed conversation.",
+      "Tie your offer to missed opportunity and consistency, not generic “scale” hype.",
+      "Surface the hidden worry: sounding robotic vs staying personal.",
+      "Earn a clear next step (trial, pilot, or second call) — Mason moves once trust is there.",
+    ],
+    practiceConstraints: [
+      "Do not steamroll — he is already cooperative.",
+      "If you pitch before a solid summary of his world, he redirects lightly; stay curious.",
+      "Reward: accurate mirroring (“sounds like demand is fine, follow-up is the leak”).",
+    ],
   },
   {
-    id: "marcus-desk-job",
-    displayName: "Marcus Chen",
-    firstName: "Marcus",
+    id: "nolan-cross",
+    displayName: "Nolan Cross",
+    firstName: "Nolan",
+    age: 28,
+    archetypeLabel: "Cautious explorer",
+    trainingTier: 2,
+    nicheGoal: "build cleaner systems before chaos hits",
+    backgroundStory:
+      "Newer coach or service provider with some traction — not drowning yet, but juggling sales, delivery, and ops manually. You can see future mess if you do not build properly. Unsure if now is the right moment to invest versus waiting for bigger pain.",
+    painPoints: [
+      "Operations feel underdeveloped for where you are headed",
+      "Reactive days — inconsistent follow-up and systems",
+      "Afraid of jumping in too early or waiting too long",
+    ],
+    buyingResistance: [
+      "Might be too early for my stage",
+      "Budget is tight while I am still proving the offer",
+    ],
+    likelyObjections: [
+      "Would this still make sense if I am not getting a huge amount of leads yet?",
+      "I am interested — I just do not want to jump too early",
+      "How would that fit where I am right now?",
+      "I am still trying to understand if this is right for my stage",
+    ],
+    emotionalTriggers: [
+      "Confidence they are building intelligently",
+      "Validation that timing can be strategic, not only reactive",
+    ],
+    budgetSensitivity: "high",
+    urgencyLevel: "medium",
+    trustLevel: "medium",
+    personalityType:
+      "Thoughtful, cautious — shares in layers; not difficult on purpose. Strongest buying reason stays hidden until you earn it with follow-ups",
+    unlockedByDefault: true,
+    objectionDifficulty: "intermediate",
+    avatarTone: "neutral",
+    initialGreeting:
+      "Hi — thanks for the time. I am interested in getting better systems in place before things get messy. I am not drowning yet, but I can see it coming.",
+    practiceObjectives: [
+      "Separate “too early” from real risk — use timing, pipeline, and hours-per-week questions.",
+      "Earn depth with follow-ups; do not accept vague “yeah, mostly.”",
+      "If you surface urgency well (future cost of waiting), he opens up.",
+      "Map a sensible first step that fits an early-stage operator.",
+    ],
+    practiceConstraints: [
+      "Do not treat low volume as disinterest — probe future chaos and opportunity cost.",
+      "If you pitch before stage-fit is clear, he defaults to “still figuring it out.”",
+    ],
+  },
+  {
+    id: "adrian-sol",
+    displayName: "Adrian Sol",
+    firstName: "Adrian",
+    age: 41,
+    archetypeLabel: "Emotional, messy buyer",
+    trainingTier: 3,
+    nicheGoal: "energy, health, and a body they are proud of — mixed goals",
+    backgroundStory:
+      "Professional or owner who wants better health, energy, and physique, but goals feel tangled. Plateaued despite effort; noisy advice online. Wants someone credible to simplify the path — emotionally honest, not always structured when they speak.",
+    painPoints: [
+      "Energy lower than it should be; feels “off”",
+      "Tried a lot — little that stuck",
+      "Overwhelmed by conflicting advice",
+      "Fear this becomes another strong start that fades",
+    ],
+    buyingResistance: [
+      "Bad advice before",
+      "Unsure what is actually right for their body and schedule",
+    ],
+    likelyObjections: [
+      "I need to know it is actually personalized",
+      "How do I know you know what is right for me?",
+      "I do not want another program that fizzles",
+      "There is so much noise online — I do not trust sources anymore",
+    ],
+    emotionalTriggers: [
+      "Feeling understood and organized when they cannot articulate it cleanly",
+      "Credibility and specificity over hype",
+    ],
+    budgetSensitivity: "medium",
+    urgencyLevel: "high",
+    trustLevel: "medium",
+    personalityType:
+      "Emotionally real, sometimes scattered — rewards labeling and clarity; goes cold if you stay generic",
+    unlockedByDefault: false,
+    objectionDifficulty: "advanced",
+    avatarTone: "warm",
+    initialGreeting:
+      "Hey… thanks. I know something needs to change. I have felt off for a while and I have tried a bunch of things — I just do not know what actually works for me anymore.",
+    unlockMinOverall: 64,
+    unlockMinCalls: 3,
+    practiceObjectives: [
+      "Help them organize mixed goals into one clear problem statement they agree with.",
+      "Earn trust with specificity and empathy before the prescription.",
+      "Address “another failed attempt” fear directly with mechanism and expectations.",
+    ],
+    practiceConstraints: [
+      "Punish generic wellness talk — they notice immediately.",
+      "If you label well, they relieve and open; if you skip diagnosis, they go vague.",
+    ],
+  },
+  {
+    id: "grant-mercer",
+    displayName: "Grant Mercer",
+    firstName: "Grant",
+    age: 45,
+    archetypeLabel: "High-functioning skeptic",
+    trainingTier: 4,
+    nicheGoal: "structure that fits travel, work, and real life",
+    backgroundStory:
+      "Busy executive or founder — high standards, real constraints (travel, dinners, recovery). Not looking for an extreme reset; wants sustainable progression and a system that adapts. Skeptical of one-size-fits-all coaching.",
+    painPoints: [
+      "No progression system — gym visits without a smart roadmap",
+      "Life keeps breaking rigid plans",
+      "Tired of vague transformation language",
+    ],
+    buyingResistance: [
+      "Underestimating how complex my schedule is",
+      "Cookie-cutter programming",
+    ],
+    likelyObjections: [
+      "How does that work when my schedule changes every week?",
+      "I need something practical — not inspiration",
+      "I do not want generic coaching",
+      "What are precise expectations week to week?",
+    ],
+    emotionalTriggers: [
+      "Respect for real constraints",
+      "Competence and precision",
+    ],
+    budgetSensitivity: "medium",
+    urgencyLevel: "high",
+    trustLevel: "low",
+    personalityType:
+      "Articulate, not hostile — hard to impress; challenges vagueness; respects realism and detail",
+    unlockedByDefault: true,
+    objectionDifficulty: "advanced",
+    avatarTone: "cool",
+    initialGreeting:
+      "Hi — good to connect. I am not looking for a dramatic reset. I need structure that fits how I actually live — travel, long days, all of it.",
+    practiceObjectives: [
+      "Prove practical fit: travel, recovery, social meals, time zones — concrete scenarios.",
+      "Replace inspiration with progression logic and flexibility within rules.",
+      "Handle “generic” objection with specifics, not defensiveness.",
+    ],
+    practiceConstraints: [
+      "Generic language triggers pushback — stay concrete.",
+      "Willingness is not his issue — fit is.",
+    ],
+  },
+  {
+    id: "elias-thorne",
+    displayName: "Elias Thorne",
+    firstName: "Elias",
     age: 38,
-    nicheGoal: "Lose visceral fat, fix back pain from sitting",
+    archetypeLabel: "Elite buyer test",
+    trainingTier: 5,
+    nicheGoal: "durable change — leverage, not another spike",
     backgroundStory:
-      "Software lead. 60-hour weeks, DoorDash dinners, hasn't trained consistently in years. Doctor mentioned blood pressure.",
-    painPoints: ["Chronic tight lower back", "Winded climbing stairs", "Confidence in meetings"],
-    buyingResistance: ["Time", "Thinks he can DIY with YouTube", "Price for something intangible"],
-    likelyObjections: [
-      "I can figure this out on my own",
-      "I barely have time to eat",
-      "Why is this better than a cheaper app?",
+      "Sophisticated buyer: capable, analytical, emotionally guarded. Not lacking information — past solutions gave short-term traction, not durable execution. Testing whether this is real mechanism or packaging. Quiet fear the pattern is internal, not tactical.",
+    painPoints: [
+      "Gap between knowing and doing under real conditions",
+      "Repeated false starts",
+      "Skeptical of marketing depth vs real leverage",
     ],
-    emotionalTriggers: ["Efficiency", "Data", "No fluff"],
-    budgetSensitivity: "medium",
-    urgencyLevel: "medium",
-    trustLevel: "low",
-    personalityType: "Analytical, dry humor, tests if you are legit",
-    unlockedByDefault: true,
-    objectionDifficulty: "intermediate",
-    avatarTone: "cool",
-    initialGreeting: "Hey, you're coming through clear. What's this call about?",
-  },
-  {
-    id: "ethan-hardgainer",
-    displayName: "Ethan Brooks",
-    firstName: "Ethan",
-    age: 24,
-    nicheGoal: "Build muscle — skinny guy bulk",
-    backgroundStory:
-      "Grad student. Ectomorph, eats 'a ton' but scale won't move. Tried bro splits, inconsistent.",
-    painPoints: ["Invisible in social settings", "Strength plateau", "Confusing conflicting advice"],
-    buyingResistance: ["Student budget", "Thinks genetics are the whole story"],
-    likelyObjections: [
-      "I'm broke right now",
-      "Can you guarantee I'll gain muscle?",
-      "I need to see the workouts first",
+    buyingResistance: [
+      "Uncertainty beats price — objection is doubt, not dollars",
+      "Fear no external system fixes the recurring pattern",
     ],
-    emotionalTriggers: ["Being taken seriously", "Clear plan", "Proof of results"],
-    budgetSensitivity: "high",
-    urgencyLevel: "low",
-    trustLevel: "medium",
-    personalityType: "Eager but anxious, compares coaches online",
-    unlockedByDefault: true,
-    objectionDifficulty: "beginner",
-    avatarTone: "neutral",
-    initialGreeting: "Yo — hey, I can hear you. Cool.",
-  },
-  {
-    id: "priya-accountability",
-    displayName: "Priya Kapoor",
-    firstName: "Priya",
-    age: 31,
-    nicheGoal: "Confidence + consistency, not just scale weight",
-    backgroundStory:
-      "Consultant. Yo-yo diets, emotional eating during stress. Wants accountability and identity shift.",
-    painPoints: ["Shame cycles", "Travel disrupts routine", "Comparison on social media"],
-    buyingResistance: ["Privacy", "Worried about toxic diet culture"],
     likelyObjections: [
-      "Is this going to be super restrictive?",
-      "I need to think about it",
-      "Send me more info and I'll review",
+      "That is still surface-level — what is the actual mechanism?",
+      "I am not here because I lack information",
+      "How do I know this changes the pattern instead of a short-term push?",
+      "Past solutions gave momentum, not durability",
+      "I am objecting to uncertainty, not price",
     ],
-    emotionalTriggers: ["Empathy", "Values alignment", "Gentle structure"],
-    budgetSensitivity: "medium",
-    urgencyLevel: "high",
-    trustLevel: "medium",
-    personalityType: "Warm, articulate, needs emotional safety",
-    unlockedByDefault: true,
-    objectionDifficulty: "intermediate",
-    avatarTone: "warm",
-    initialGreeting: "Hi! Yes I can hear you — thanks for making the time.",
-  },
-  {
-    id: "jordan-calisthenics",
-    displayName: "Jordan Reyes",
-    firstName: "Jordan",
-    age: 29,
-    nicheGoal: "Calisthenics skills + lean physique",
-    backgroundStory:
-      "Former athlete. Wants pull-ups, handstands, outdoor training vibe. Skeptical of 'bodybuilding' style.",
-    painPoints: ["Plateau on bodyweight", "Wrist issues", "Wants lifestyle fit"],
-    buyingResistance: ["Identity — not a gym bro", "Price for non-barbell plan"],
-    likelyObjections: [
-      "Your price is too high for bodyweight stuff",
-      "I want to wait until after my trip",
-      "Why are you better than others?",
+    emotionalTriggers: [
+      "Being met with rigor, not charm",
+      "Precision on root cause vs symptom",
     ],
-    emotionalTriggers: ["Respect for their style", "Progressions", "Injury-aware coaching"],
-    budgetSensitivity: "medium",
-    urgencyLevel: "low",
-    trustLevel: "low",
-    personalityType: "Independent, challenges authority politely",
-    unlockedByDefault: true,
-    objectionDifficulty: "intermediate",
-    avatarTone: "deep",
-    initialGreeting: "Hey hey — loud and clear. What are we walking through today?",
-  },
-  {
-    id: "taylor-recomp",
-    displayName: "Taylor Morgan",
-    firstName: "Taylor",
-    age: 33,
-    nicheGoal: "Body recomposition — look athletic, keep strength",
-    backgroundStory:
-      "Former college athlete. Skinny-fat phase, wants visible abs without losing all strength.",
-    painPoints: ["Confused by bulk/cut", "Weekend social eating", "Impatient for visuals"],
-    buyingResistance: ["Wants proof fast", "Has tried macro apps"],
-    likelyObjections: [
-      "How fast will I see results?",
-      "I need to ask someone before I commit",
-      "Is this a scam?",
-    ],
-    emotionalTriggers: ["Clarity", "Realistic timelines", "Structure"],
     budgetSensitivity: "low",
     urgencyLevel: "high",
-    trustLevel: "medium",
-    personalityType: "Direct, wants specifics, competitive",
-    unlockedByDefault: false,
-    objectionDifficulty: "advanced",
-    avatarTone: "neutral",
-    initialGreeting: "Hey — good to connect. I've got like 30 minutes.",
-  },
-  {
-    id: "high-intent-alex",
-    displayName: "Alex Rivera",
-    firstName: "Alex",
-    age: 36,
-    nicheGoal: "Fat loss for wedding in 4 months",
-    backgroundStory:
-      "High intent. Already sold on coaching concept, comparing two coaches. Will buy if trust + plan feel right.",
-    painPoints: ["Deadline pressure", "Wants spouse on board"],
-    buyingResistance: ["Choosing the right coach"],
-    likelyObjections: [
-      "What exactly do I get each week?",
-      "Can I pay in full for a discount?",
-    ],
-    emotionalTriggers: ["Confidence", "Clear onboarding", "Partnership"],
-    budgetSensitivity: "low",
-    urgencyLevel: "high",
-    trustLevel: "high",
-    personalityType: "Decisive, cooperative, moves fast if respected",
-    unlockedByDefault: false,
-    objectionDifficulty: "beginner",
-    avatarTone: "warm",
-    initialGreeting: "Hi! I'm excited to chat — I've been following your content.",
-  },
-  {
-    id: "skeptical-dana",
-    displayName: "Dana Whitaker",
-    firstName: "Dana",
-    age: 42,
-    nicheGoal: "Sustainable fat loss, skeptical of industry",
-    backgroundStory:
-      "Burned by a coach who ghosted after payment. Reads reviews, asks hard questions.",
-    painPoints: ["Trust issues", "All-or-nothing history"],
-    buyingResistance: ["Trust", "Contract terms", "Refund policy"],
-    likelyObjections: [
-      "I've been burned before",
-      "Can you guarantee results?",
-      "Why should I believe you?",
-      "Send me the contract before I pay",
-    ],
-    emotionalTriggers: ["Transparency", "Boundaries", "No hype"],
-    budgetSensitivity: "medium",
-    urgencyLevel: "low",
     trustLevel: "low",
-    personalityType: "Skeptical, sharp, loyal if won honestly",
-    unlockedByDefault: false,
+    personalityType:
+      "Calm, controlled, demanding — holds deepest objection until earned; punishes hype and premature pitch",
+    unlockedByDefault: true,
     objectionDifficulty: "killer",
-    avatarTone: "cool",
-    initialGreeting: "Hello. I'll be honest — I'm cautious, but I'm here.",
-  },
-  {
-    id: "broke-but-interested",
-    displayName: "Chris Okafor",
-    firstName: "Chris",
-    age: 27,
-    nicheGoal: "Weight loss on a tight budget",
-    backgroundStory:
-      "Gig worker income varies. Wants help but terrified of payment. Motivated emotionally, financially stretched.",
-    painPoints: ["Income volatility", "Shame about money", "Stress eating"],
-    buyingResistance: ["Cash flow", "Fear of payment plans"],
-    likelyObjections: [
-      "I can't afford it right now",
-      "Can we start smaller?",
-      "I need to think about it",
-    ],
-    emotionalTriggers: ["Dignity", "Options", "Honest math"],
-    budgetSensitivity: "high",
-    urgencyLevel: "medium",
-    trustLevel: "medium",
-    personalityType: "Apologetic about money, hopeful",
-    unlockedByDefault: true,
-    objectionDifficulty: "intermediate",
     avatarTone: "deep",
-    initialGreeting: "Hey… thanks for the call. I might be a mess financially but I'm serious.",
-  },
-  {
-    id: "spouse-objection-ryan",
-    displayName: "Ryan Gallagher",
-    firstName: "Ryan",
-    age: 40,
-    nicheGoal: "Dad bod reset",
-    backgroundStory:
-      "Wants to buy; spouse thinks coaching is a luxury. Ryan is caught in the middle.",
-    painPoints: ["Marital tension about spend", "Time guilt"],
-    buyingResistance: ["Spouse approval"],
-    likelyObjections: [
-      "My wife won't be okay with the price",
-      "I need to run it by my partner",
-      "She thinks I can do it free with running",
+    initialGreeting:
+      "Hello. I am trying to figure out whether outside help would actually create leverage — or if I have seen this movie before.",
+    practiceObjectives: [
+      "Diagnose root cause vs symptom; use causal language he respects.",
+      "Explain mechanism and why it maps to his pattern — not feature lists.",
+      "Earn the hidden fear (pattern / self-trust) before asking for commitment.",
     ],
-    emotionalTriggers: ["Respect for family", "Framing for spouse"],
-    budgetSensitivity: "high",
-    urgencyLevel: "medium",
-    trustLevel: "medium",
-    personalityType: "Agreeable, conflict-avoidant, wants a script for spouse",
-    unlockedByDefault: false,
-    objectionDifficulty: "advanced",
-    avatarTone: "neutral",
-    initialGreeting: "Hey — I grabbed a quiet room. So… yeah, let's talk.",
-  },
-  {
-    id: "think-about-it-kim",
-    displayName: "Kim Alvarez",
-    firstName: "Kim",
-    age: 35,
-    nicheGoal: "General fat loss",
-    backgroundStory:
-      "Classic 'I need to think about it' — uses delay as safety. Often interested but avoids commitment.",
-    painPoints: ["Decision fatigue", "Fear of wrong choice"],
-    buyingResistance: ["Commitment anxiety"],
-    likelyObjections: [
-      "I need to think about it",
-      "I'm interested but not right now",
-      "Can you follow up next week?",
+    practiceConstraints: [
+      "No premature pitching — he will shut down or go ice-cold polite.",
+      "Reward precision and grounded personalization; punish slogans.",
     ],
-    emotionalTriggers: ["Safety", "Small next steps", "No pressure"],
-    budgetSensitivity: "medium",
-    urgencyLevel: "low",
-    trustLevel: "medium",
-    personalityType: "Pleasant, vague, stalls",
-    unlockedByDefault: true,
-    objectionDifficulty: "intermediate",
-    avatarTone: "warm",
-    initialGreeting: "Hi! Thanks for hopping on — I'm still figuring out what I need.",
-  },
-  {
-    id: "diy-sam",
-    displayName: "Sam Okonkwo",
-    firstName: "Sam",
-    age: 30,
-    nicheGoal: "Athletic performance",
-    backgroundStory:
-      "Believes they can DIY with free content. Secretly stuck. Pride blocks asking for help.",
-    painPoints: ["Stalled progress", "Information overload"],
-    buyingResistance: ["Identity: 'I should know this'"],
-    likelyObjections: [
-      "I can do it on my own",
-      "I just need a meal plan PDF",
-      "Your price is too high for accountability",
-    ],
-    emotionalTriggers: ["Competence respect", "Efficiency", "Ego-safe framing"],
-    budgetSensitivity: "medium",
-    urgencyLevel: "low",
-    trustLevel: "low",
-    personalityType: "Proud, debates you politely",
-    unlockedByDefault: true,
-    objectionDifficulty: "advanced",
-    avatarTone: "cool",
-    initialGreeting: "Hey. So — I'm pretty self-sufficient, but I'm curious what you do differently.",
   },
 ];
+
+export function isPersonaUnlocked(p: Persona, progress: UserProgress): boolean {
+  if (p.unlockedByDefault) return true;
+  if (progress.unlockedPersonaIds.includes(p.id)) return true;
+  const needScore = p.unlockMinOverall ?? 999;
+  const needCalls = p.unlockMinCalls ?? 0;
+  if (progress.bestOverall >= needScore && progress.totalCalls >= needCalls) return true;
+  return false;
+}
+
+export function getAvailablePersonas(progress: UserProgress): Persona[] {
+  return PERSONAS.filter((p) => isPersonaUnlocked(p, progress));
+}
 
 export function getPersonaById(id: string | undefined): Persona {
   const found = PERSONAS.find((p) => p.id === id);
   return found ?? PERSONAS[0];
-}
-
-export function getAvailablePersonas(unlockedIds: string[]): Persona[] {
-  return PERSONAS.filter((p) => p.unlockedByDefault || unlockedIds.includes(p.id));
 }

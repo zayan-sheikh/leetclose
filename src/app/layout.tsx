@@ -1,5 +1,24 @@
 import type { Metadata } from "next";
+import { DM_Sans, JetBrains_Mono, Outfit } from "next/font/google";
 import "./globals.css";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm",
+  display: "swap",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "CloserArena AI — Practice Sales Calls Until Closing Feels Automatic",
@@ -13,8 +32,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased bg-background text-foreground">
+    <html
+      lang="en"
+      className={`dark ${dmSans.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
+    >
+      <body
+        className={`${dmSans.className} antialiased bg-background text-foreground min-h-screen`}
+      >
         {children}
       </body>
     </html>

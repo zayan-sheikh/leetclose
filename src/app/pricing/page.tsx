@@ -30,42 +30,60 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="page-mesh-bg opacity-45" aria-hidden />
       <DashboardNav />
-      <main className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p className="text-accent text-sm font-medium mb-3">Low-friction trial</p>
-        <h1 className="text-4xl font-bold mb-4">Train like your income depends on it</h1>
-        <p className="text-muted max-w-lg mx-auto mb-10">
-          3-day free trial, then keep full access for less than a protein shake per week.
+      <main className="relative mx-auto max-w-3xl px-4 py-16 text-center">
+        <p className="label-overline mb-3">Pricing</p>
+        <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+          Train like your income depends on it
+        </h1>
+        <p className="mx-auto mt-3 max-w-lg text-sm text-muted md:text-base">
+          3-day free trial, then keep full access for less than a protein shake per
+          week — sharp product, zero fluff.
         </p>
 
-        <div className="bg-card border border-border rounded-2xl p-10 text-left max-w-md mx-auto shadow-xl">
-          <div className="flex items-baseline gap-3 mb-2">
-            <span className="text-4xl font-bold">$3</span>
+        <div className="card-premium mx-auto mt-12 max-w-md p-8 pt-9 text-left">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-4xl font-bold text-white">$3</span>
             <span className="text-muted">/month intro</span>
           </div>
-          <p className="text-sm text-muted mb-6">
-            <span className="line-through text-muted">$11/month</span>
-            <span className="ml-2 text-foreground">normally — you lock intro pricing at signup.</span>
+          <p className="mt-2 text-sm text-muted">
+            <span className="text-zinc-600 line-through">$11/mo</span>
+            <span className="ml-2 text-zinc-300">
+              list — lock intro pricing when you start your trial.
+            </span>
           </p>
-          <ul className="space-y-2 text-sm text-foreground/90 mb-8">
-            <li>✓ Unlimited AI practice calls</li>
-            <li>✓ Objection &amp; closing modes</li>
-            <li>✓ Performance breakdowns + transcripts</li>
-            <li>✓ XP, streaks, and prospect unlocks</li>
+          <ul className="mb-8 mt-6 space-y-2.5 text-sm text-zinc-300">
+            <li className="flex gap-2">
+              <span className="text-cyan-400">✓</span>
+              Unlimited AI practice calls
+            </li>
+            <li className="flex gap-2">
+              <span className="text-cyan-400">✓</span>
+              Objection &amp; closing modes
+            </li>
+            <li className="flex gap-2">
+              <span className="text-cyan-400">✓</span>
+              Performance breakdowns + transcripts
+            </li>
+            <li className="flex gap-2">
+              <span className="text-cyan-400">✓</span>
+              XP, streaks, and prospect unlocks
+            </li>
           </ul>
           <button
             type="button"
             onClick={startCheckout}
             disabled={loading}
-            className="w-full py-4 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white rounded-xl font-semibold text-lg"
+            className="btn-primary-glow w-full rounded-xl py-4 text-base font-semibold text-white disabled:opacity-50"
           >
             {loading ? "Redirecting…" : "Start free 3-day trial"}
           </button>
           {err && (
-            <p className="text-sm text-warning mt-4 text-center">{err}</p>
+            <p className="mt-4 text-center text-sm text-amber-400/95">{err}</p>
           )}
-          <p className="text-xs text-muted text-center mt-4">
-            Secure checkout powered by Stripe. Cancel anytime.
+          <p className="mt-4 text-center font-hud text-[10px] uppercase tracking-wider text-zinc-600">
+            Secure checkout · Stripe · Cancel anytime
           </p>
         </div>
       </main>

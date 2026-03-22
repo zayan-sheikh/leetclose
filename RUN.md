@@ -1,7 +1,6 @@
 # Run locally
 
 ```bash
-cd /Users/sakethpoori/Downloads/testclose-main
 npm install
 npm run dev
 ```

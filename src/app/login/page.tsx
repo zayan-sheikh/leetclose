@@ -10,13 +10,11 @@ export default function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // MVP: Simple localStorage auth
     const user = localStorage.getItem("closearena_user");
     if (user) {
       const onboarded = localStorage.getItem("closearena_onboarded");
       router.push(onboarded ? "/dashboard" : "/onboarding");
     } else {
-      // Auto-create for MVP
       localStorage.setItem(
         "closearena_user",
         JSON.stringify({ email, createdAt: Date.now() })
@@ -26,56 +24,67 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold">CA</span>
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="page-mesh-bg opacity-60" aria-hidden />
+      <div className="relative w-full max-w-md">
+        <div className="card-premium p-8 pt-9 shadow-2xl md:p-10">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-500 p-[2px] shadow-[0_0_24px_-4px_var(--glow-cyan)]">
+              <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-[#0c0c0e]">
+                <span className="font-display text-sm font-bold text-cyan-300">CA</span>
+              </div>
+            </div>
+            <p className="label-overline mb-2">Welcome back</p>
+            <h1 className="font-display text-2xl font-bold tracking-tight">Sign in</h1>
+            <p className="mt-2 text-sm text-muted">Continue your practice streak</p>
           </div>
-          <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-sm text-muted mt-1">Log in to continue practicing</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-premium"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-premium"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn-primary-glow mt-2 w-full rounded-xl py-3 text-sm font-semibold text-white"
+            >
+              Log in
+            </button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-muted">
+            Don&apos;t have an account?{" "}
+            <button
+              type="button"
+              onClick={() => router.push("/signup")}
+              className="font-medium text-cyan-400 hover:text-cyan-300 hover:underline"
+            >
+              Sign up free
+            </button>
+          </p>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-muted mb-1.5">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-muted mb-1.5">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent"
-              placeholder="Your password"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-3 bg-accent hover:bg-accent-hover text-white rounded-xl font-medium transition-colors"
-          >
-            Log in
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-muted mt-6">
-          Don&apos;t have an account?{" "}
-          <button
-            onClick={() => router.push("/signup")}
-            className="text-accent hover:underline"
-          >
-            Sign up free
-          </button>
-        </p>
       </div>
     </div>
   );

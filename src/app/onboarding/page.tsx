@@ -50,28 +50,6 @@ const STEPS = [
     key: "niche",
   },
   {
-    question: "What's your current close rate on sales calls?",
-    options: [
-      "Under 10%",
-      "10–25%",
-      "25–40%",
-      "40–60%",
-      "60%+",
-    ],
-    key: "closeRate",
-  },
-  {
-    question: "What tone do you want to practice with?",
-    options: [
-      "Warm & consultative",
-      "Direct & confident",
-      "Calm authority",
-      "High-energy motivator",
-      "Clinical / precise",
-    ],
-    key: "practiceTone",
-  },
-  {
     question: "Which objections do you struggle with most?",
     options: [
       "Too expensive",
@@ -85,6 +63,22 @@ const STEPS = [
     ],
     key: "weakObjections",
     multi: true,
+  },
+  {
+    question: "What's your current close rate on sales calls?",
+    options: ["Under 10%", "10–25%", "25–40%", "40–60%", "60%+"],
+    key: "closeRate",
+  },
+  {
+    question: "What tone do you want to practice with?",
+    options: [
+      "Warm & consultative",
+      "Direct & confident",
+      "Calm authority",
+      "High-energy motivator",
+      "Clinical / precise",
+    ],
+    key: "practiceTone",
   },
 ];
 
@@ -133,65 +127,76 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-lg w-full">
-        <div className="flex gap-2 mb-8">
-          {STEPS.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                i <= step ? "bg-accent" : "bg-border"
-              }`}
-            />
-          ))}
-        </div>
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="page-mesh-bg opacity-55" aria-hidden />
+      <div className="relative w-full max-w-lg">
+        <div className="card-premium p-6 pt-8 md:p-8">
+          <p className="label-overline mb-4">Onboarding</p>
+          <div className="mb-8 flex gap-1.5">
+            {STEPS.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                  i <= step
+                    ? "bg-gradient-to-r from-cyan-500 to-indigo-500 shadow-[0_0_12px_-2px_var(--glow-cyan)]"
+                    : "bg-white/[0.08]"
+                }`}
+              />
+            ))}
+          </div>
 
-        <div className="text-center mb-8">
-          <p className="text-xs text-muted uppercase tracking-wider mb-2">
-            Step {step + 1} of {STEPS.length}
-          </p>
-          <h1 className="text-2xl font-bold">{current.question}</h1>
-          {isMulti && (
-            <p className="text-sm text-muted mt-2">Select all that apply</p>
+          <div className="mb-8 text-center">
+            <p className="font-hud text-[11px] font-medium uppercase tracking-widest text-zinc-500">
+              Step {step + 1} / {STEPS.length}
+            </p>
+            <h1 className="font-display mt-3 text-xl font-bold leading-snug tracking-tight md:text-2xl">
+              {current.question}
+            </h1>
+            {isMulti && (
+              <p className="mt-2 text-sm text-muted">Select all that apply</p>
+            )}
+          </div>
+
+          <div className="space-y-2.5">
+            {current.options.map((option) => {
+              const selected = isMulti && selectedMulti.includes(option);
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleSelect(option)}
+                  className={`w-full rounded-xl border px-5 py-3.5 text-left text-sm font-medium transition-all ${
+                    selected
+                      ? "border-cyan-400/45 bg-cyan-400/10 text-zinc-50 shadow-[0_0_24px_-10px_var(--glow-cyan)] ring-1 ring-cyan-400/20"
+                      : "border-white/[0.08] bg-black/25 text-zinc-200 hover:border-white/15 hover:bg-white/[0.04]"
+                  }`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+
+          {isMulti && selectedMulti.length > 0 && (
+            <button
+              type="button"
+              onClick={handleMultiNext}
+              className="btn-primary-glow mt-6 w-full rounded-xl py-3 text-sm font-semibold text-white"
+            >
+              Continue
+            </button>
+          )}
+
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={() => setStep(step - 1)}
+              className="mt-3 w-full py-2.5 text-sm text-muted transition-colors hover:text-zinc-200"
+            >
+              ← Back
+            </button>
           )}
         </div>
-
-        <div className="space-y-3">
-          {current.options.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => handleSelect(option)}
-              className={`w-full text-left px-5 py-4 rounded-xl border transition-all ${
-                isMulti && selectedMulti.includes(option)
-                  ? "border-accent bg-accent/10 text-foreground"
-                  : "border-border bg-card hover:bg-card-hover text-foreground hover:border-muted"
-              }`}
-            >
-              <span className="text-sm font-medium">{option}</span>
-            </button>
-          ))}
-        </div>
-
-        {isMulti && selectedMulti.length > 0 && (
-          <button
-            type="button"
-            onClick={handleMultiNext}
-            className="w-full mt-6 px-6 py-3 bg-accent hover:bg-accent-hover text-white rounded-xl font-medium transition-colors"
-          >
-            Continue
-          </button>
-        )}
-
-        {step > 0 && (
-          <button
-            type="button"
-            onClick={() => setStep(step - 1)}
-            className="w-full mt-3 px-6 py-3 text-muted hover:text-foreground transition-colors text-sm"
-          >
-            Back
-          </button>
-        )}
       </div>
     </div>
   );
