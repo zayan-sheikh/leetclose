@@ -17,7 +17,7 @@ export default function DashboardNav() {
   const path = usePathname();
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-card/85 backdrop-blur-xl">
+    <header className="frosted-surface sticky top-0 z-10 border-b border-border">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Link
           href="/dashboard"
