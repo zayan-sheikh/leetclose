@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import DashboardNav from "@/components/DashboardNav";
 import { TRAINING_MODES } from "@/lib/modes";
-import { getAvailablePersonas, isPersonaUnlocked, PERSONAS } from "@/lib/personas";
+import {
+  getAvailablePersonas,
+  isPersonaUnlocked,
+  PERSONAS,
+} from "@/lib/personas";
 import {
   BADGE_DEFS,
   difficultyLadder,
@@ -45,7 +49,7 @@ export default function DashboardPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-sm text-muted">
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-sky-300/40 border-t-sky-300" />
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-accent" />
           Loading…
         </div>
       </div>
@@ -60,46 +64,46 @@ export default function DashboardPage() {
   const firstName = name.split(/\s+/)[0] ?? name;
 
   const panel =
-    "rounded-2xl border border-sky-400/22 bg-sky-950/50 p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(125,211,252,0.06)]";
-  const panelTitle = "font-display text-base font-semibold text-sky-50";
+    "rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  const panelTitle = "font-display text-base font-semibold text-foreground";
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />
       <main className="relative mx-auto max-w-6xl px-4 py-8 sm:py-10">
-        <section className="mb-8 border-b border-sky-500/20 pb-8 sm:mb-10 sm:pb-10">
+        <section className="mb-8 border-b border-border pb-8 sm:mb-10 sm:pb-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="font-hud text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-400/80">
+              <p className="font-hud text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
                 Dashboard
               </p>
-              <h1 className="font-display mt-2 text-3xl font-bold tracking-tight text-sky-50 sm:text-4xl">
-                Hey <span className="text-sky-200">{firstName}</span>
+              <h1 className="font-display mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Hey <span className="text-accent">{firstName}</span>
               </h1>
-              <p className="mt-2 max-w-lg text-sm leading-relaxed text-sky-300/85">
-                Run reps, climb ranks, unlock harder prospects. One focused session beats ten vague
-                roleplays.
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted">
+                Run reps, climb ranks, unlock harder prospects. One focused
+                session beats ten vague roleplays.
               </p>
               <p className="mt-3 text-sm">
                 <Link
                   href="/onboarding"
-                  className="font-medium text-sky-300 underline decoration-sky-400/40 underline-offset-2 transition-colors hover:text-sky-200 hover:decoration-sky-300/60"
+                  className="font-medium text-accent underline decoration-accent/45 underline-offset-2 transition-colors hover:text-foreground hover:decoration-accent/70"
                 >
                   Update coaching profile
                 </Link>
-                <span className="text-sky-400/60"> · </span>
-                <span className="text-sky-300/70">niche, objections, tone</span>
+                <span className="text-muted"> · </span>
+                <span className="text-muted">niche, objections, tone</span>
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 py-1.5 font-hud text-[11px] font-semibold uppercase tracking-wide text-sky-200">
+              <span className="rounded-lg border border-ring bg-card px-3 py-1.5 font-hud text-[11px] font-semibold uppercase tracking-wide text-foreground">
                 {rankLabel(progress.level)}
               </span>
-              <span className="rounded-lg border border-sky-400/28 bg-sky-900/35 px-3 py-1.5 font-hud text-[11px] text-sky-200">
+              <span className="rounded-lg border border-border bg-background px-3 py-1.5 font-hud text-[11px] text-muted">
                 Level {progress.level}
               </span>
               {progress.streak >= 2 && (
-                <span className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 font-hud text-[11px] font-semibold text-amber-200">
+                <span className="rounded-lg border border-amber-400/30 bg-amber-400/12 px-3 py-1.5 font-hud text-[11px] font-semibold text-amber-900 dark:text-amber-100">
                   {progress.streak}d streak
                 </span>
               )}
@@ -107,26 +111,30 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-6 max-w-xl">
-            <div className="flex items-baseline justify-between text-xs text-sky-400/80">
+            <div className="flex items-baseline justify-between text-xs text-muted">
               <span>
                 {lv.isMax ? (
-                  <span className="text-success/90">Max level — keep grinding XP</span>
+                  <span className="text-success/90">
+                    Max level — keep grinding XP
+                  </span>
                 ) : (
                   <>
-                    <span className="font-hud tabular-nums text-sky-200">
+                    <span className="font-hud tabular-nums text-foreground">
                       {progress.xp.toLocaleString()}
                     </span>
                     {" XP · "}
-                    {lv.xpIntoLevel.toLocaleString()} / {lv.xpForNext.toLocaleString()} to level{" "}
-                    {lv.level + 1}
+                    {lv.xpIntoLevel.toLocaleString()} /{" "}
+                    {lv.xpForNext.toLocaleString()} to level {lv.level + 1}
                   </>
                 )}
               </span>
-              <span className="font-hud tabular-nums text-sky-300/85">{lv.pct}%</span>
+              <span className="font-hud tabular-nums text-foreground">
+                {lv.pct}%
+              </span>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-sky-900/65">
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#252a34]">
               <div
-                className="h-full rounded-full bg-sky-400 transition-[width] duration-500 ease-out"
+                className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
                 style={{ width: `${lv.pct}%` }}
               />
             </div>
@@ -134,63 +142,82 @@ export default function DashboardPage() {
         </section>
 
         <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile label="Total XP" value={progress.xp.toLocaleString()} accent="sky" />
-          <StatTile label="Best score" value={String(progress.bestOverall)} accent="success" />
+          <StatTile
+            label="Total XP"
+            value={progress.xp.toLocaleString()}
+            accent="sky"
+          />
+          <StatTile
+            label="Best score"
+            value={String(progress.bestOverall)}
+            accent="success"
+          />
           <StatTile
             label="Streak"
             value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`}
             accent="amber"
           />
-          <StatTile label="Calls logged" value={String(progress.totalCalls)} accent="violet" />
+          <StatTile
+            label="Calls logged"
+            value={String(progress.totalCalls)}
+            accent="violet"
+          />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-7">
             <div className={`${panel} sm:p-7`}>
-              <h2 className="font-display text-lg font-semibold text-sky-50">Practice floor</h2>
-              <p className="mt-1 text-sm text-sky-300/85">
-                Persona + mode on the next screen — your profile shapes how the AI pushes back.
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Practice floor
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Persona + mode on the next screen — your profile shapes how the
+                AI pushes back.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() => router.push("/call")}
-                  className="rounded-xl bg-sky-400 px-6 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-300 active:scale-[0.99]"
+                  className="btn-primary-glow rounded-xl px-6 py-3 text-sm font-semibold text-white active:scale-[0.99]"
                 >
                   Start practice call
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/leaderboard")}
-                  className="rounded-xl border border-success/30 bg-success/5 px-5 py-3 text-sm font-medium text-zinc-50/90 transition-colors hover:bg-success/10"
+                  className="rounded-xl border border-success/30 bg-success/8 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-success/12 dark:text-zinc-50"
                 >
                   View leaderboard
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/pricing")}
-                  className="rounded-xl border border-sky-400/35 px-5 py-3 text-sm text-sky-300/85 transition-colors hover:border-sky-300/50 hover:text-sky-50"
+                  className="rounded-xl border border-border bg-background px-5 py-3 text-sm text-foreground transition-colors hover:border-ring"
                 >
                   Upgrade
                 </button>
               </div>
 
-              <h3 className="font-hud mb-3 mt-10 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-400/80">
+              <h3 className="font-hud mb-3 mt-10 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
                 Training modes
               </h3>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {TRAINING_MODES.map((m) => (
                   <li
                     key={m.id}
-                    className="flex gap-3 rounded-xl border border-sky-500/25 bg-sky-950/40 px-3 py-2.5 transition-colors hover:border-sky-400/38"
+                    className="flex gap-3 rounded-xl border border-border bg-background/70 px-3 py-2.5 transition-colors hover:border-ring"
                   >
                     <span
-                      className="mt-0.5 h-8 w-1 shrink-0 rounded-full bg-sky-300/70"
+                      className="mt-0.5 h-8 w-1 shrink-0 rounded-full bg-accent"
                       aria-hidden
                     />
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-sky-100">{m.label}</span>
-                      <p className="mt-0.5 text-xs leading-snug text-sky-400/75">{m.description}</p>
+                      <span className="text-sm font-medium text-foreground">
+                        {m.label}
+                      </span>
+                      <p className="mt-0.5 text-xs leading-snug text-muted">
+                        {m.description}
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -203,16 +230,17 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className={panelTitle}>Daily challenge</h2>
-                  <p className="mt-1 text-sm text-sky-300/85">
-                    Hit <strong className="font-medium text-success">65+</strong> overall on any call
-                    today.
+                  <p className="mt-1 text-sm text-muted">
+                    Hit{" "}
+                    <strong className="font-medium text-success">65+</strong>{" "}
+                    overall on any call today.
                   </p>
                 </div>
                 <span
                   className={`shrink-0 rounded-md border px-2.5 py-1 font-hud text-[10px] font-bold uppercase tracking-wide ${
                     progress.dailyChallengeDone
-                      ? "border-success/30 bg-success/10 text-zinc-50"
-                      : "border-amber-400/30 bg-amber-500/10 text-amber-200"
+                      ? "border-success/30 bg-success/10 text-foreground dark:text-zinc-50"
+                      : "border-amber-400/30 bg-amber-500/12 text-amber-900 dark:text-amber-100"
                   }`}
                 >
                   {progress.dailyChallengeDone ? "Done" : "Open"}
@@ -222,37 +250,43 @@ export default function DashboardPage() {
 
             <div className={panel}>
               <h2 className={panelTitle}>Weekly cup</h2>
-              <p className="mt-1 text-sm text-sky-300/85">
+              <p className="mt-1 text-sm text-muted">
                 Solo tournament track: your scores this week. After{" "}
-                <strong className="text-sky-200">3 runs</strong>, we lock a cup average from your last
-                three sessions.
+                <strong className="text-foreground">3 runs</strong>, we lock a
+                cup average from your last three sessions.
               </p>
               <dl className="mt-4 grid grid-cols-2 gap-3 font-hud text-xs">
-                <div className="rounded-lg border border-sky-400/22 bg-sky-950/45 px-3 py-2">
-                  <dt className="text-sky-400/80">Runs</dt>
-                  <dd className="mt-0.5 tabular-nums text-lg font-semibold text-sky-50">{cup.runs}</dd>
+                <div className="rounded-lg border border-border bg-background px-3 py-2">
+                  <dt className="text-muted">Runs</dt>
+                  <dd className="mt-0.5 tabular-nums text-lg font-semibold text-foreground">
+                    {cup.runs}
+                  </dd>
                 </div>
-                <div className="rounded-lg border border-sky-400/22 bg-sky-950/45 px-3 py-2">
-                  <dt className="text-sky-400/80">Cup avg</dt>
-                  <dd className="mt-0.5 tabular-nums text-lg font-semibold text-sky-50">
+                <div className="rounded-lg border border-border bg-background px-3 py-2">
+                  <dt className="text-muted">Cup avg</dt>
+                  <dd className="mt-0.5 tabular-nums text-lg font-semibold text-foreground">
                     {cup.avgLast3 ?? "—"}
                   </dd>
                 </div>
               </dl>
               {cup.runs > 0 && cup.avgLast3 == null && cup.runs < 3 && (
-                <p className="mt-2 text-xs text-sky-400/75">
-                  {3 - cup.runs} more call{3 - cup.runs === 1 ? "" : "s"} to unlock cup average.
+                <p className="mt-2 text-xs text-muted">
+                  {3 - cup.runs} more call{3 - cup.runs === 1 ? "" : "s"} to
+                  unlock cup average.
                 </p>
               )}
               {cup.avgAll != null && (
-                <p className="mt-2 text-xs text-sky-500/70">Week average (all runs): {cup.avgAll}</p>
+                <p className="mt-2 text-xs text-muted">
+                  Week average (all runs): {cup.avgAll}
+                </p>
               )}
             </div>
 
             <div className={panel}>
               <h2 className={panelTitle}>Difficulty unlocks</h2>
-              <p className="mt-1 text-sm text-sky-300/85">
-                Prospect &quot;objection&quot; tiers — earn stronger scores to unlock.
+              <p className="mt-1 text-sm text-muted">
+                Prospect &quot;objection&quot; tiers — earn stronger scores to
+                unlock.
               </p>
               <ol className="mt-4 space-y-2">
                 {ladder.map((rung, i) => (
@@ -261,20 +295,20 @@ export default function DashboardPage() {
                     className={`flex items-center gap-3 rounded-lg border px-3 py-2 ${
                       rung.unlocked
                         ? "border-success/25 bg-success/[0.06]"
-                        : "border-sky-500/22 bg-sky-950/32"
+                        : "border-border bg-background/60"
                     }`}
                   >
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-hud text-[11px] font-bold ${
                         rung.unlocked
-                          ? "bg-success/15 text-zinc-50"
-                          : "bg-sky-800/45 text-sky-400/75"
+                          ? "bg-success/15 text-foreground dark:text-zinc-50"
+                          : "bg-[#262b35] text-muted"
                       }`}
                     >
                       {i + 1}
                     </span>
                     <span
-                      className={`flex-1 text-sm font-medium ${rung.unlocked ? "text-sky-100" : "text-sky-400/75"}`}
+                      className={`flex-1 text-sm font-medium ${rung.unlocked ? "text-foreground" : "text-muted"}`}
                     >
                       {rung.label}
                     </span>
@@ -283,7 +317,7 @@ export default function DashboardPage() {
                         Live
                       </span>
                     ) : (
-                      <span className="font-hud text-[10px] uppercase tracking-wide text-sky-500/65">
+                      <span className="font-hud text-[10px] uppercase tracking-wide text-muted">
                         Locked
                       </span>
                     )}
@@ -294,7 +328,9 @@ export default function DashboardPage() {
 
             <div className={panel}>
               <h2 className={panelTitle}>Badges</h2>
-              <p className="mt-1 text-sm text-sky-300/85">Earned from strong session scores and streaks.</p>
+              <p className="mt-1 text-sm text-muted">
+                Earned from strong session scores and streaks.
+              </p>
               <ul className="mt-4 flex flex-wrap gap-2">
                 {BADGE_DEFS.map((b) => {
                   const earned = progress.badges.includes(b.id);
@@ -304,8 +340,8 @@ export default function DashboardPage() {
                       title={b.description}
                       className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
                         earned
-                          ? "border-sky-400/30 bg-sky-400/10 text-sky-100"
-                          : "border-sky-400/22 bg-sky-950/32 text-sky-400/75"
+                          ? "border-ring bg-[#2a2418] text-foreground"
+                          : "border-border bg-background text-muted"
                       }`}
                     >
                       {earned ? "✓ " : ""}
@@ -316,11 +352,17 @@ export default function DashboardPage() {
               </ul>
             </div>
 
-            <div className={`${panel} border-dashed border-sky-400/28`}>
+            <div className={`${panel} border-dashed border-border`}>
               <h2 className={panelTitle}>Prospects</h2>
-              <p className="mt-1 text-sm text-sky-400/80">
-                <span className="tabular-nums text-sky-300/85">{available.length}</span> unlocked ·{" "}
-                <span className="tabular-nums text-sky-300/85">{lockedCount}</span> locked
+              <p className="mt-1 text-sm text-muted">
+                <span className="tabular-nums text-foreground">
+                  {available.length}
+                </span>{" "}
+                unlocked ·{" "}
+                <span className="tabular-nums text-foreground">
+                  {lockedCount}
+                </span>{" "}
+                locked
               </p>
               <ul className="mt-3 max-h-36 space-y-1 overflow-y-auto text-xs">
                 {PERSONAS.map((p) => {
@@ -332,14 +374,16 @@ export default function DashboardPage() {
                   return (
                     <li
                       key={p.id}
-                      className="flex justify-between gap-2 border-b border-sky-700/30 py-1.5 last:border-0"
+                      className="flex justify-between gap-2 border-b border-border py-1.5 last:border-0"
                     >
-                      <span className={open ? "text-sky-200" : "text-sky-500/65"}>{p.displayName}</span>
+                      <span className={open ? "text-foreground" : "text-muted"}>
+                        {p.displayName}
+                      </span>
                       <span
-                        className={`shrink-0 text-right ${open ? "text-success/85" : "text-sky-500/65"}`}
+                        className={`shrink-0 text-right ${open ? "text-success/85" : "text-muted"}`}
                         title={gate ?? undefined}
                       >
-                        {open ? "Open" : gate ?? "Locked"}
+                        {open ? "Open" : (gate ?? "Locked")}
                       </span>
                     </li>
                   );
@@ -363,23 +407,23 @@ function StatTile({
   accent: "sky" | "success" | "amber" | "violet";
 }) {
   const border = {
-    sky: "border-l-4 border-l-sky-300/55",
+    sky: "border-l-4 border-l-ring",
     success: "border-l-4 border-l-success/70",
     amber: "border-l-4 border-l-amber-300/55",
     violet: "border-l-4 border-l-violet-300/55",
   }[accent];
   const valueColor = {
-    sky: "text-sky-100",
-    success: "text-zinc-50",
-    amber: "text-amber-100",
-    violet: "text-violet-100",
+    sky: "text-foreground",
+    success: "text-foreground",
+    amber: "text-foreground",
+    violet: "text-foreground",
   }[accent];
 
   return (
     <div
-      className={`rounded-2xl border border-sky-400/22 bg-sky-950/52 pl-4 pr-4 py-4 sm:py-5 shadow-[inset_0_1px_0_rgba(125,211,252,0.05)] ${border}`}
+      className={`rounded-2xl border border-border bg-card pl-4 pr-4 py-4 sm:py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${border}`}
     >
-      <p className="font-hud text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-400/80">
+      <p className="font-hud text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
         {label}
       </p>
       <p

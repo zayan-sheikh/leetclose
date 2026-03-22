@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const links = [
@@ -16,32 +17,43 @@ export default function DashboardNav() {
   const path = usePathname();
 
   return (
-    <header className="sticky top-0 z-10 border-b border-sky-400/25 bg-sky-950/75 backdrop-blur-xl">
+    <header className="sticky top-0 z-10 border-b border-border bg-card/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Link
           href="/dashboard"
           className="font-display flex items-center gap-2.5 font-bold tracking-tight"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-400/35 bg-sky-400/15 text-sm font-bold text-sky-200">
-            CA
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-sm font-bold text-foreground">
+            <Image
+              src="/icon.svg"
+              alt="LeetClose"
+              width={36}
+              height={36}
+              className="h-full w-full p-1 dark:hidden"
+            />
+            <Image
+              src="/iconwhite.svg"
+              alt="LeetClose"
+              width={36}
+              height={36}
+              className="hidden h-full w-full p-1 dark:block"
+            />
           </span>
           <span>
-            CloserArena{" "}
-            <span className="text-muted text-sm font-normal">AI</span>
+            LeetClose <span className="text-muted text-sm font-normal">AI</span>
           </span>
         </Link>
         <nav className="flex flex-wrap gap-1 sm:gap-1.5">
           {links.map((l) => {
-            const active =
-              path === l.href || path?.startsWith(l.href + "/");
+            const active = path === l.href || path?.startsWith(l.href + "/");
             return (
               <Link
                 key={l.href}
                 href={l.href}
                 className={`rounded-full px-3.5 py-1.5 text-sm transition-colors ${
                   active
-                    ? "bg-sky-400/15 font-medium text-sky-100 ring-1 ring-sky-400/25"
-                    : "text-sky-300/85 hover:bg-sky-900/45 hover:text-sky-50"
+                    ? "bg-card-hover font-medium text-foreground ring-1 ring-border"
+                    : "text-muted hover:bg-card-hover hover:text-foreground"
                 }`}
               >
                 {l.label}

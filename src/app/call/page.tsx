@@ -6,12 +6,16 @@ import Link from "next/link";
 import Avatar, { type AvatarHandle } from "@/components/Avatar";
 import CallTimer from "@/components/CallTimer";
 import Transcript, { TranscriptMessage } from "@/components/Transcript";
-import { getPersonaById, PERSONAS, type Persona } from "@/lib/personas";
+import { getPersonaById, PERSONAS } from "@/lib/personas";
 import CallProblemPanel from "@/components/CallProblemPanel";
 import PersonaFace from "@/components/PersonaFace";
 import { TRAINING_MODES, getModeById, type TrainingModeId } from "@/lib/modes";
 import { getInitialMessageForPersona } from "@/lib/prospect-prompt";
-import { defaultProgress, loadProgress, personaAllowed } from "@/lib/gamification";
+import {
+  defaultProgress,
+  loadProgress,
+  personaAllowed,
+} from "@/lib/gamification";
 
 const UserCallCamera = dynamic(() => import("@/components/UserCallCamera"), {
   ssr: false,
@@ -138,7 +142,10 @@ export default function CallPage() {
             ]);
             return;
           } catch (e) {
-            console.warn("[call] HeyGen speak failed or timed out, using browser TTS", e);
+            console.warn(
+              "[call] HeyGen speak failed or timed out, using browser TTS",
+              e,
+            );
           }
         }
 
@@ -428,7 +435,7 @@ export default function CallPage() {
     const persona = getPersonaById(personaId);
     if (!personaAllowed(persona, p)) {
       alert(
-        "This prospect unlocks as your best overall score and call count improve — check the dashboard for locked prospects."
+        "This prospect unlocks as your best overall score and call count improve — check the dashboard for locked prospects.",
       );
       return;
     }
@@ -613,25 +620,31 @@ export default function CallPage() {
     return (
       <div className="relative flex min-h-screen flex-col bg-background">
         <div className="page-mesh-bg opacity-50" aria-hidden />
-        <header className="relative z-[1] flex items-center justify-between border-b border-sky-500/20 bg-[#0f172a]/90 px-4 py-2.5 backdrop-blur-xl">
+        <header className="relative z-[1] flex items-center justify-between border-b border-border bg-card/90 px-4 py-2.5 backdrop-blur-xl">
           <Link
             href="/dashboard"
-            className="font-hud text-xs font-medium uppercase tracking-wide text-sky-200/75 transition-colors hover:text-sky-100"
+            className="font-hud text-xs font-medium uppercase tracking-wide text-muted transition-colors hover:text-foreground"
           >
             ← Problem list
           </Link>
-          <span className="font-display text-xs font-semibold tracking-wide text-zinc-100">
-            CloserArena <span className="text-sky-400/55">·</span>{" "}
+          <span className="font-display text-xs font-semibold tracking-wide text-foreground">
+            CloserArena <span className="text-muted">·</span>{" "}
             <span style={{ color: "#ffa116" }} className="font-mono">
               practice
             </span>
           </span>
-          <span className="w-20 text-right font-hud text-[10px] text-sky-300/50">Beta</span>
+          <span className="w-20 text-right font-hud text-[10px] text-muted">
+            Beta
+          </span>
         </header>
 
         <div className="relative z-[1] flex min-h-0 flex-1 flex-col lg:flex-row">
-          <aside className="flex max-h-[min(48vh,420px)] min-h-0 shrink-0 flex-col border-b border-white/10 lg:max-h-none lg:w-[min(44vw,30rem)] lg:border-b-0 lg:border-r lg:border-white/10">
-            <CallProblemPanel persona={activePersona} mode={activeMode} variant="setup" />
+          <aside className="flex max-h-[min(48vh,420px)] min-h-0 shrink-0 flex-col border-b border-border lg:max-h-none lg:w-[min(44vw,30rem)] lg:border-b-0 lg:border-r lg:border-border">
+            <CallProblemPanel
+              persona={activePersona}
+              mode={activeMode}
+              variant="setup"
+            />
           </aside>
 
           <div className="relative min-h-0 flex-1 overflow-y-auto">
@@ -647,30 +660,36 @@ export default function CallPage() {
               <p className="font-hud text-[10px] font-semibold uppercase tracking-widest text-sky-200/65">
                 Code editor
               </p>
-              <h1 className="font-display mt-1 text-2xl font-bold tracking-tight text-white">
+              <h1 className="font-display mt-1 text-2xl font-bold tracking-tight text-foreground">
                 Pick your opponent
               </h1>
-              <p className="mt-2 text-sm text-sky-100/60">
+              <p className="mt-2 text-sm text-muted">
                 Mic + speakers on · Chrome recommended for voice
               </p>
 
-              <label className="mb-2 mt-8 block font-hud text-[10px] font-semibold uppercase tracking-wider text-sky-200/55">
+              <label className="mb-2 mt-8 block font-hud text-[10px] font-semibold uppercase tracking-wider text-muted">
                 Language / Mode
               </label>
               <select
                 value={modeId}
                 onChange={(e) => setModeId(e.target.value as TrainingModeId)}
-                className="w-full rounded-xl border border-white/15 bg-black/25 py-3 pl-3 pr-8 text-sm text-white shadow-inner backdrop-blur-md focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                className="w-full rounded-xl border border-border bg-card py-3 pl-3 pr-8 text-sm text-foreground shadow-inner backdrop-blur-md focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40"
               >
                 {TRAINING_MODES.map((m) => (
-                  <option key={m.id} value={m.id} className="bg-[#111c2e]">
+                  <option
+                    key={m.id}
+                    value={m.id}
+                    className="bg-card text-foreground"
+                  >
                     {m.label}
                   </option>
                 ))}
               </select>
-              <p className="mt-2 text-xs text-sky-100/50">{activeMode.description}</p>
+              <p className="mt-2 text-xs text-muted">
+                {activeMode.description}
+              </p>
 
-              <h2 className="mb-3 mt-8 font-hud text-[10px] font-semibold uppercase tracking-wider text-sky-200/55">
+              <h2 className="mb-3 mt-8 font-hud text-[10px] font-semibold uppercase tracking-wider text-muted">
                 Opponents
               </h2>
               <div className="flex flex-col gap-2.5">
@@ -685,16 +704,24 @@ export default function CallPage() {
                       onClick={() => allowed && setPersonaId(p.id)}
                       className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left shadow-sm transition-all ${
                         selected
-                          ? "border-sky-400/50 bg-white/15 ring-2 ring-sky-400/35 backdrop-blur-md"
-                          : "border-white/10 bg-black/20 backdrop-blur-md hover:border-sky-400/30 hover:bg-white/10"
+                          ? "border-ring bg-card ring-2 ring-ring/40 backdrop-blur-md"
+                          : "border-border bg-background/70 backdrop-blur-md hover:border-ring"
                       } ${!allowed ? "cursor-not-allowed opacity-45" : ""}`}
                     >
-                      <PersonaFace personaId={p.id} displayName={p.displayName} size={48} />
+                      <PersonaFace
+                        personaId={p.id}
+                        displayName={p.displayName}
+                        size={48}
+                      />
                       <div className="min-w-0 flex-1">
-                        <div className="font-display text-sm font-bold text-white">{p.displayName}</div>
-                        <div className="truncate text-xs text-sky-100/55">{p.nicheGoal}</div>
+                        <div className="font-display text-sm font-bold text-foreground">
+                          {p.displayName}
+                        </div>
+                        <div className="truncate text-xs text-muted">
+                          {p.nicheGoal}
+                        </div>
                       </div>
-                      <div className="shrink-0 text-right font-hud text-[10px] uppercase tracking-wide text-sky-200/60">
+                      <div className="shrink-0 text-right font-hud text-[10px] uppercase tracking-wide text-muted">
                         {p.objectionDifficulty}
                         <br />
                         {!allowed ? (
@@ -712,21 +739,29 @@ export default function CallPage() {
                 })}
               </div>
 
-              <div className="mt-6 flex items-center gap-3 rounded-xl border border-white/12 bg-black/25 p-4 backdrop-blur-md">
-                <PersonaFace personaId={activePersona.id} displayName={activePersona.displayName} size={44} />
+              <div className="mt-6 flex items-center gap-3 rounded-xl border border-border bg-card p-4 backdrop-blur-md">
+                <PersonaFace
+                  personaId={activePersona.id}
+                  displayName={activePersona.displayName}
+                  size={44}
+                />
                 <div className="min-w-0">
-                  <p className="font-hud text-[10px] font-semibold uppercase tracking-wider text-sky-200/50">
+                  <p className="font-hud text-[10px] font-semibold uppercase tracking-wider text-muted">
                     Selected
                   </p>
-                  <p className="text-sm font-semibold text-white">{activePersona.displayName}</p>
-                  <p className="text-xs text-sky-100/55">{activePersona.personalityType}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {activePersona.displayName}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {activePersona.personalityType}
+                  </p>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={startCall}
-                className="mt-8 w-full rounded-xl bg-gradient-to-r from-sky-500 to-cyan-600 py-3.5 text-sm font-bold text-white shadow-[0_0_32px_-6px_var(--glow-cyan)] transition-all hover:brightness-110 active:scale-[0.99] sm:py-4 sm:text-base"
+                className="btn-primary-glow mt-8 w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all active:scale-[0.99] sm:py-4 sm:text-base"
               >
                 Submit — Join call
               </button>
@@ -741,10 +776,10 @@ export default function CallPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-sky-500/20 bg-[#0f172a]/95 px-3 py-2 backdrop-blur-xl sm:px-4">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card/95 px-3 py-2 backdrop-blur-xl sm:px-4">
         <Link
           href="/dashboard"
-          className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-medium text-sky-100/85 transition-colors hover:border-sky-400/35 hover:text-white"
+          className="shrink-0 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:border-ring"
         >
           ← Leave
         </Link>
@@ -761,32 +796,41 @@ export default function CallPage() {
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside className="flex max-h-[min(40vh,320px)] min-h-0 shrink-0 border-b border-white/10 lg:max-h-none lg:w-[min(42vw,30rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:border-white/10">
-          <CallProblemPanel persona={activePersona} mode={activeMode} variant="active" />
+          <CallProblemPanel
+            persona={activePersona}
+            mode={activeMode}
+            variant="active"
+          />
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#0f0815]">
           {/* Toolbar */}
           <div className="flex shrink-0 flex-col gap-1.5 border-b border-white/10 bg-[#111c2e] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="shrink-0 rounded bg-sky-600/40 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-sky-50">
+              <span className="shrink-0 rounded bg-[#2a2418] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-accent">
                 Live
               </span>
-              <span className="hidden font-mono text-[11px] text-zinc-500 sm:inline">{modeLabel}</span>
+              <span className="hidden font-mono text-[11px] text-zinc-500 sm:inline">
+                {modeLabel}
+              </span>
               <p className="w-full text-[10px] leading-snug text-zinc-500 sm:w-auto sm:max-w-[20rem]">
-                <span className="text-sky-300/85">Objections:</span> happen in the live call (voice +
-                transcript). Likely lines are under{" "}
+                <span className="text-sky-300/85">Objections:</span> happen in
+                the live call (voice + transcript). Likely lines are under{" "}
                 <span className="text-zinc-400">Problem → Constraints</span>.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <CallTimer isActive={callState === "active"} startTime={callStartTime} />
+              <CallTimer
+                isActive={callState === "active"}
+                startTime={callStartTime}
+              />
               <button
                 type="button"
                 onClick={() => setShowTranscript(!showTranscript)}
                 className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
                   showTranscript
-                    ? "border-sky-400/45 bg-sky-500/15 text-sky-100"
-                    : "border-white/10 bg-black/20 text-zinc-400 hover:border-white/20"
+                    ? "border-ring bg-card text-foreground"
+                    : "border-border bg-background text-muted hover:border-ring"
                 }`}
               >
                 Transcript
@@ -797,14 +841,13 @@ export default function CallPage() {
                 className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
                   showSessionLog
                     ? "border-amber-400/40 bg-amber-500/10 text-amber-100"
-                    : "border-white/10 bg-black/20 text-zinc-400 hover:border-white/20"
+                    : "border-border bg-background text-muted hover:border-ring"
                 }`}
               >
                 Session log
               </button>
             </div>
           </div>
-
           {/* Center column + right transcript */}
           <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -856,10 +899,13 @@ export default function CallPage() {
                   </div>
                   <div className="min-h-0 flex-1 overflow-y-auto p-3 text-left">
                     {speechHint ? (
-                      <p className="text-sm leading-relaxed text-amber-200/95">{speechHint}</p>
+                      <p className="text-sm leading-relaxed text-amber-200/95">
+                        {speechHint}
+                      </p>
                     ) : (
                       <p className="font-mono text-xs text-zinc-500">
-                        No voice warnings. If the mic or network fails, details show here.
+                        No voice warnings. If the mic or network fails, details
+                        show here.
                       </p>
                     )}
                     <div className="mt-3 space-y-1 border-t border-white/10 pt-2 font-mono text-[11px] text-zinc-500">
@@ -912,8 +958,9 @@ export default function CallPage() {
                 </div>
 
                 <p className="mb-2 text-center text-[10px] leading-snug text-zinc-500">
-                  Voice: pause ~1s after you finish (or tap mute) to send. Mic turns back on after the
-                  prospect speaks — tap mute anytime to stay silent.
+                  Voice: pause ~1s after you finish (or tap mute) to send. Mic
+                  turns back on after the prospect speaks — tap mute anytime to
+                  stay silent.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                   <button
@@ -931,7 +978,12 @@ export default function CallPage() {
                     }
                   >
                     {isMuted ? (
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -946,7 +998,12 @@ export default function CallPage() {
                         />
                       </svg>
                     ) : (
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -964,10 +1021,14 @@ export default function CallPage() {
                     className={`min-h-12 shrink-0 rounded-full px-4 text-sm font-semibold transition-all sm:px-5 ${
                       stripeSent
                         ? "border border-success/35 bg-success/15 text-zinc-50"
-                        : "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-[0_0_28px_-8px_rgba(14,165,233,0.45)] hover:brightness-110"
+                        : "btn-primary-glow text-white"
                     } disabled:opacity-50`}
                   >
-                    {stripeSent ? "Stripe sent" : sendingStripe ? "Sending…" : "Send Stripe link"}
+                    {stripeSent
+                      ? "Stripe sent"
+                      : sendingStripe
+                        ? "Sending…"
+                        : "Send Stripe link"}
                   </button>
 
                   <button

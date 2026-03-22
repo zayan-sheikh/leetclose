@@ -15,29 +15,30 @@ function firstSentences(text: string, max: number): string {
 
 type TabId = "description" | "editorial" | "submissions";
 
-function difficultyMeta(
-  d: Persona["objectionDifficulty"]
-): { label: string; className: string } {
+function difficultyMeta(d: Persona["objectionDifficulty"]): {
+  label: string;
+  className: string;
+} {
   switch (d) {
     case "beginner":
       return {
         label: "Easy",
-        className: "bg-cyan-500/20 text-cyan-900 ring-1 ring-cyan-400/45 dark:text-cyan-100",
+        className: "bg-[#1f2a36] text-foreground ring-1 ring-border",
       };
     case "intermediate":
       return {
         label: "Medium",
-        className: "bg-amber-500/20 text-amber-800 ring-1 ring-amber-400/45 dark:text-amber-100",
+        className: "bg-[#2a2418] text-foreground ring-1 ring-ring/60",
       };
     case "advanced":
       return {
         label: "Hard",
-        className: "bg-orange-500/20 text-orange-900 ring-1 ring-orange-400/45 dark:text-orange-100",
+        className: "bg-[#33271f] text-foreground ring-1 ring-border",
       };
     case "killer":
       return {
         label: "Hard",
-        className: "bg-violet-500/20 text-violet-950 ring-1 ring-violet-400/45 dark:text-violet-100",
+        className: "bg-[#2a2433] text-foreground ring-1 ring-border",
       };
     default:
       return {
@@ -66,9 +67,9 @@ export default function CallProblemPanel({
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#f8fbff] dark:bg-[#121c2e]">
+    <div className="flex h-full min-h-0 flex-col bg-card">
       {/* LeetCode-style tab row */}
-      <div className="flex shrink-0 border-b border-sky-200/70 bg-white/90 dark:border-white/[0.08] dark:bg-[#0f172a]/95">
+      <div className="flex shrink-0 border-b border-border bg-background/90">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -76,14 +77,14 @@ export default function CallProblemPanel({
             onClick={() => setTab(t.id)}
             className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
               tab === t.id
-                ? "text-sky-950 dark:text-white"
-                : "text-sky-600/80 hover:text-sky-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+                ? "text-foreground"
+                : "text-muted hover:text-foreground"
             }`}
           >
             {t.label}
             {tab === t.id && (
               <span
-                className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-sky-600 dark:bg-[#ffa116]"
+                className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-accent"
                 aria-hidden
               />
             )}
@@ -93,14 +94,14 @@ export default function CallProblemPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 lg:px-5 lg:py-5">
         {/* Title block — like problem number + name */}
-        <div className="border-b border-sky-200/50 pb-4 dark:border-white/[0.06]">
+        <div className="border-b border-border pb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-xl font-bold tracking-tight text-sky-950 dark:text-zinc-50">
+            <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
               {mode.label}
             </h2>
             {variant === "active" && (
               <span
-                className="rounded border border-success/40 bg-success/15 px-1.5 py-0.5 text-xs font-medium text-cyan-950 dark:text-success"
+                className="rounded border border-success/40 bg-success/15 px-1.5 py-0.5 text-xs font-medium text-success"
                 title="Session in progress"
               >
                 ✓ Live
@@ -108,46 +109,49 @@ export default function CallProblemPanel({
             )}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${diff.className}`}>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${diff.className}`}
+            >
               {diff.label}
             </span>
-            <span className="rounded-full border border-sky-300/60 bg-white/70 px-2.5 py-0.5 text-xs font-medium text-sky-900 dark:border-white/12 dark:bg-white/10 dark:text-zinc-300">
+            <span className="rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium text-muted">
               Tier {persona.trainingTier}/5 · {persona.archetypeLabel}
             </span>
             <button
               type="button"
-              className="rounded-full border border-sky-300/80 bg-sky-100/80 px-2.5 py-0.5 text-xs font-medium text-sky-900 dark:border-white/15 dark:bg-white/10 dark:text-zinc-300"
+              className="rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium text-muted"
             >
               Topics
             </button>
-            <span className="rounded-full border border-sky-200 bg-white/60 px-2.5 py-0.5 font-mono text-[10px] text-sky-700 dark:border-white/10 dark:bg-black/20 dark:text-zinc-400">
+            <span className="rounded-full border border-border bg-background px-2.5 py-0.5 font-mono text-[10px] text-muted">
               {mode.id}
             </span>
-            <span className="rounded-full border border-sky-300/50 bg-sky-100/60 px-2.5 py-0.5 text-xs font-medium text-sky-900 dark:border-sky-500/35 dark:bg-sky-500/12 dark:text-sky-200">
+            <span className="rounded-full border border-ring bg-[#2a2418] px-2.5 py-0.5 text-xs font-medium text-accent">
               vs {persona.firstName}
             </span>
           </div>
-          <p className="mt-3 text-sm text-sky-800 dark:text-zinc-400">
+          <p className="mt-3 text-sm text-muted">
             Prospect: {persona.displayName}
           </p>
         </div>
 
         {tab === "description" && (
           <div className="space-y-4 pt-5">
-            <p className="text-sm leading-snug text-sky-800 dark:text-zinc-400">
+            <p className="text-sm leading-snug text-muted">
               Pushback happens in the live call. Likely lines:{" "}
-              <span className="text-sky-950 dark:text-zinc-200">Constraints</span> · tone:{" "}
-              <span className="text-sky-950 dark:text-zinc-200">Objectives</span>.
+              <span className="text-foreground">Constraints</span> · tone:{" "}
+              <span className="text-foreground">Objectives</span>.
             </p>
 
-            <p className="text-sm leading-relaxed text-sky-950 dark:text-zinc-300">
-              <span className="font-medium text-sky-950 dark:text-zinc-100">
+            <p className="text-sm leading-relaxed text-foreground">
+              <span className="font-medium text-foreground">
                 {persona.archetypeLabel}.
               </span>{" "}
-              {firstSentences(persona.backgroundStory, 2)} Trying to {persona.nicheGoal}.
+              {firstSentences(persona.backgroundStory, 2)} Trying to{" "}
+              {persona.nicheGoal}.
             </p>
 
-            <p className="border-l-2 border-sky-400/40 pl-3 text-sm leading-snug italic text-sky-800 dark:border-sky-500/35 dark:text-zinc-400">
+            <p className="border-l-2 border-ring pl-3 text-sm leading-snug italic text-muted">
               &ldquo;{persona.initialGreeting}&rdquo;
             </p>
           </div>
@@ -162,7 +166,7 @@ export default function CallProblemPanel({
               >
                 Mode focus
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-sky-900/90 dark:text-zinc-400">
+              <p className="mt-2 text-sm leading-relaxed text-muted">
                 {mode.description}
               </p>
             </div>
@@ -173,10 +177,10 @@ export default function CallProblemPanel({
               >
                 Your objectives
               </p>
-              <ul className="mt-2 list-none space-y-2.5 text-sm text-sky-950 dark:text-zinc-300">
+              <ul className="mt-2 list-none space-y-2.5 text-sm text-foreground">
                 {mode.goals.map((g, i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="font-mono text-sky-400 dark:text-zinc-600">{i + 1}.</span>
+                    <span className="font-mono text-muted">{i + 1}.</span>
                     <span>{g}</span>
                   </li>
                 ))}
@@ -189,10 +193,10 @@ export default function CallProblemPanel({
               >
                 Matchup objectives ({persona.firstName})
               </p>
-              <ul className="mt-2 list-none space-y-2.5 text-sm text-sky-950 dark:text-zinc-300">
+              <ul className="mt-2 list-none space-y-2.5 text-sm text-foreground">
                 {persona.practiceObjectives.map((g, i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="font-mono text-sky-400 dark:text-zinc-600">{i + 1}.</span>
+                    <span className="font-mono text-muted">{i + 1}.</span>
                     <span>{g}</span>
                   </li>
                 ))}
@@ -211,22 +215,22 @@ export default function CallProblemPanel({
               ].map(([k, v]) => (
                 <div
                   key={k}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-sky-200/60 bg-white/60 px-3 py-2 dark:border-white/[0.08] dark:bg-black/25"
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2"
                 >
-                  <span className="font-hud text-[10px] uppercase tracking-wider text-sky-500 dark:text-zinc-500">
+                  <span className="font-hud text-[10px] uppercase tracking-wider text-muted">
                     {k}
                   </span>
-                  <span className="text-xs font-medium capitalize text-sky-950 dark:text-zinc-200">
+                  <span className="text-xs font-medium capitalize text-foreground">
                     {v}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="rounded-lg border border-sky-200/60 bg-white/60 p-3 dark:border-white/[0.08] dark:bg-black/25">
-              <span className="font-hud text-[10px] uppercase tracking-wider text-sky-500 dark:text-zinc-500">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <span className="font-hud text-[10px] uppercase tracking-wider text-muted">
                 Personality
               </span>
-              <p className="mt-1 text-sm text-sky-900 dark:text-zinc-300">
+              <p className="mt-1 text-sm text-foreground">
                 {persona.personalityType}
               </p>
             </div>
@@ -237,12 +241,13 @@ export default function CallProblemPanel({
               >
                 Sales framework (AI + you)
               </p>
-              <p className="mt-1.5 text-xs leading-relaxed text-sky-800 dark:text-zinc-500">
-                The prospect is prompted to follow this consultative arc. Question-based selling and
-                solid diagnosis before the offer earn warmer, more honest responses — NEPQ-style
-                layering is rewarded; pitch-first behavior is resisted.
+              <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                The prospect is prompted to follow this consultative arc.
+                Question-based selling and solid diagnosis before the offer earn
+                warmer, more honest responses — NEPQ-style layering is rewarded;
+                pitch-first behavior is resisted.
               </p>
-              <ol className="mt-2.5 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-sky-900 dark:text-zinc-400">
+              <ol className="mt-2.5 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-foreground">
                 {CONSULTATIVE_CALL_PHASES.map((phase, i) => (
                   <li key={i}>{phase}</li>
                 ))}
@@ -255,10 +260,10 @@ export default function CallProblemPanel({
               >
                 Coach constraints
               </p>
-              <ul className="mt-2 list-none space-y-2 text-sm text-sky-900 dark:text-zinc-400">
+              <ul className="mt-2 list-none space-y-2 text-sm text-foreground">
                 {persona.practiceConstraints.map((c, i) => (
                   <li key={i} className="flex gap-2 leading-snug">
-                    <span className="font-mono text-sky-400/80 dark:text-zinc-600">·</span>
+                    <span className="font-mono text-muted">·</span>
                     <span>{c}</span>
                   </li>
                 ))}
@@ -271,7 +276,7 @@ export default function CallProblemPanel({
               >
                 Watch for
               </p>
-              <ul className="mt-2 space-y-1.5 border-l-2 border-amber-400/50 pl-3 text-sm text-sky-900 dark:text-zinc-400">
+              <ul className="mt-2 space-y-1.5 border-l-2 border-amber-400/50 pl-3 text-sm text-foreground">
                 {persona.likelyObjections.map((o, i) => (
                   <li key={i} className="leading-snug">
                     &quot;{o}&quot;
@@ -280,13 +285,16 @@ export default function CallProblemPanel({
               </ul>
             </div>
             {variant === "setup" && (
-              <div className="rounded-lg border border-dashed border-sky-300 bg-sky-100/40 p-3 dark:border-sky-500/30 dark:bg-sky-950/20">
-                <p className="font-hud text-[10px] font-semibold uppercase tracking-wider text-sky-600 dark:text-zinc-500">
+              <div className="rounded-lg border border-dashed border-ring bg-[#2a2418] p-3">
+                <p className="font-hud text-[10px] font-semibold uppercase tracking-wider text-accent">
                   Hint
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-sky-800 dark:text-zinc-500">
+                <p className="mt-1 text-xs leading-relaxed text-foreground">
                   Configure the workspace on the right, then hit{" "}
-                  <span className="font-semibold text-sky-950 dark:text-zinc-300">Join call</span>.
+                  <span className="font-semibold text-foreground">
+                    Join call
+                  </span>
+                  .
                 </p>
               </div>
             )}

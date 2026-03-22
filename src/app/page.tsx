@@ -15,7 +15,9 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-500 p-[2px] shadow-[0_0_24px_-4px_var(--glow-cyan)]">
               <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-[#0c0c0e]">
-                <span className="font-display text-sm font-bold text-cyan-300">CA</span>
+                <span className="font-display text-sm font-bold text-cyan-300">
+                  CA
+                </span>
               </div>
             </div>
             <span className="font-display text-lg font-bold tracking-tight">
@@ -62,9 +64,9 @@ export default function LandingPage() {
           <span className="text-gradient-brand">closing feels automatic</span>
         </h1>
         <p className="mx-auto mb-8 mt-5 max-w-2xl text-base text-muted md:text-lg">
-          A premium AI practice floor: objections, tone control, transcripts, and
-          scores — built like a SaaS product, paced like a game, structured like a
-          Zoom session.
+          A premium AI practice floor: objections, tone control, transcripts,
+          and scores — built like a SaaS product, paced like a game, structured
+          like a Zoom session.
         </p>
         <div className="flex flex-col justify-center gap-3 sm:flex-row sm:items-center">
           <button
@@ -102,7 +104,9 @@ export default function LandingPage() {
               <p className="font-hud text-[10px] font-medium uppercase tracking-widest text-zinc-500">
                 {s.k}
               </p>
-              <p className="font-display mt-1 text-xl font-bold text-white sm:text-2xl">{s.v}</p>
+              <p className="font-display mt-1 text-xl font-bold text-white sm:text-2xl">
+                {s.v}
+              </p>
               <p className="mt-0.5 text-[11px] text-zinc-500">{s.d}</p>
             </div>
           ))}
@@ -143,8 +147,8 @@ export default function LandingPage() {
                   Sarah Mitchell
                 </p>
                 <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">
-                  &quot;Hey — I can hear you. Walk me through what you actually do for
-                  clients, and why now?&quot;
+                  &quot;Hey — I can hear you. Walk me through what you actually
+                  do for clients, and why now?&quot;
                 </p>
               </div>
               <div className="flex h-8 items-end justify-center gap-1">
@@ -188,12 +192,19 @@ export default function LandingPage() {
               icon: "◆",
             },
           ].map((feature) => (
-            <div key={feature.title} className="card-premium card-hover-glow p-6 pt-7">
-              <span className="font-hud text-lg text-cyan-400/90">{feature.icon}</span>
+            <div
+              key={feature.title}
+              className="card-premium card-hover-glow p-6 pt-7"
+            >
+              <span className="font-hud text-lg text-cyan-400/90">
+                {feature.icon}
+              </span>
               <h3 className="font-display mt-3 text-lg font-semibold tracking-tight">
                 {feature.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{feature.desc}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                {feature.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -259,7 +270,9 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-indigo-500">
-              <span className="font-display text-[10px] font-bold text-white">CA</span>
+              <span className="font-display text-[10px] font-bold text-white">
+                CA
+              </span>
             </div>
             <span className="text-sm text-muted">CloserArena AI</span>
           </div>

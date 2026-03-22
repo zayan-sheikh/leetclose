@@ -35,6 +35,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`dark ${dmSans.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
+      style={{ colorScheme: "dark" }}
     >
       <body
         className={`${dmSans.className} antialiased bg-background text-foreground min-h-screen`}

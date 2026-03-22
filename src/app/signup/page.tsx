@@ -13,7 +13,7 @@ export default function SignupPage() {
     e.preventDefault();
     localStorage.setItem(
       "closearena_user",
-      JSON.stringify({ name, email, createdAt: Date.now() })
+      JSON.stringify({ name, email, createdAt: Date.now() }),
     );
     router.push("/onboarding");
   };
@@ -25,8 +25,10 @@ export default function SignupPage() {
         <div className="card-premium p-8 pt-9 shadow-2xl md:p-10">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-500 p-[2px] shadow-[0_0_24px_-4px_var(--glow-cyan)]">
-              <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-[#0c0c0e]">
-                <span className="font-display text-sm font-bold text-cyan-300">CA</span>
+              <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-card">
+                <span className="font-display text-sm font-bold text-accent">
+                  CA
+                </span>
               </div>
             </div>
             <p className="label-overline mb-2">Create account</p>
@@ -40,7 +42,7 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+              <label className="mb-1.5 block text-xs font-medium text-muted">
                 Full name
               </label>
               <input
@@ -53,7 +55,7 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+              <label className="mb-1.5 block text-xs font-medium text-muted">
                 Email
               </label>
               <input
@@ -66,7 +68,7 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+              <label className="mb-1.5 block text-xs font-medium text-muted">
                 Password
               </label>
               <input
@@ -81,7 +83,7 @@ export default function SignupPage() {
             </div>
             <button
               type="submit"
-              className="btn-primary-glow mt-2 w-full rounded-xl py-3 text-sm font-semibold text-white"
+              className="btn-primary-glow mt-2 w-full rounded-xl py-3 text-sm font-semibold"
             >
               Create account
             </button>
@@ -92,7 +94,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => router.push("/login")}
-              className="font-medium text-cyan-400 hover:text-cyan-300 hover:underline"
+              className="font-medium text-accent hover:text-accent-hover hover:underline"
             >
               Log in
             </button>
