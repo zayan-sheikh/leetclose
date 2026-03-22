@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import DashboardNav from "@/components/DashboardNav";
+import FetchAgentsPanel from "@/components/FetchAgentsPanel";
 import { TRAINING_MODES } from "@/lib/modes";
 import {
   getAvailablePersonas,
@@ -162,6 +163,10 @@ export default function DashboardPage() {
             value={String(progress.totalCalls)}
             accent="violet"
           />
+        </div>
+
+        <div className="mb-8">
+          <FetchAgentsPanel />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">

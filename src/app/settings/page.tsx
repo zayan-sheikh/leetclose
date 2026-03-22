@@ -10,10 +10,35 @@ export default function SettingsPage() {
   const router = useRouter();
   const [profileJson, setProfileJson] = useState("");
   const [saved, setSaved] = useState(false);
+  const [fetchAgentsPing, setFetchAgentsPing] = useState<{
+    session: boolean;
+    stats: boolean;
+    challenge: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const p = localStorage.getItem("closearena_profile");
     setProfileJson(p ? JSON.stringify(JSON.parse(p), null, 2) : "{}");
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/fetch-bridge/status");
+        const j = (await r.json()) as {
+          agents?: { session: boolean; stats: boolean; challenge: boolean };
+        };
+        if (cancelled) return;
+        if (j.agents) setFetchAgentsPing(j.agents);
+      } catch {
+        if (!cancelled)
+          setFetchAgentsPing({ session: false, stats: false, challenge: false });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function saveProfile() {
@@ -93,6 +118,44 @@ export default function SettingsPage() {
               </span>
             )}
           </div>
+        </section>
+
+        <section className="card-premium p-6 pt-7">
+          <h2 className="font-display text-base font-semibold">Fetch.ai uAgents (local)</h2>
+          <p className="mt-2 text-sm text-muted">
+            Three Python uAgents (no LLM): <strong className="text-foreground">session</strong>{" "}
+            (records metadata after feedback), <strong className="text-foreground">stats</strong>{" "}
+            (reads <code className="font-mono text-[11px]">fetch-bridge/data/sessions.jsonl</code>),{" "}
+            <strong className="text-foreground">challenge</strong> (deterministic daily tip). Run{" "}
+            <code className="rounded bg-muted/30 px-1 font-mono text-xs">python run_all_agents.py</code>{" "}
+            in <code className="font-mono text-xs">fetch-bridge/</code>. Ports default to 8765–8767;
+            override with <code className="font-mono text-xs">FETCH_BRIDGE_*_URL</code> in{" "}
+            <code className="font-mono text-xs">.env</code> if needed. Agentverse optional.
+          </p>
+          {fetchAgentsPing === null ? (
+            <p className="mt-4 text-sm text-muted">Checking agent ports…</p>
+          ) : (
+            <ul className="mt-4 space-y-2 text-sm text-foreground">
+              <li className="flex items-center gap-2">
+                <span
+                  className={`h-2 w-2 rounded-full ${fetchAgentsPing.session ? "bg-emerald-400" : "bg-zinc-600"}`}
+                />
+                Session recorder · :8765
+              </li>
+              <li className="flex items-center gap-2">
+                <span
+                  className={`h-2 w-2 rounded-full ${fetchAgentsPing.stats ? "bg-emerald-400" : "bg-zinc-600"}`}
+                />
+                Stats aggregator · :8766
+              </li>
+              <li className="flex items-center gap-2">
+                <span
+                  className={`h-2 w-2 rounded-full ${fetchAgentsPing.challenge ? "bg-emerald-400" : "bg-zinc-600"}`}
+                />
+                Daily challenge · :8767
+              </li>
+            </ul>
+          )}
         </section>
 
         <section className="card-premium space-y-4 p-6 pt-7">

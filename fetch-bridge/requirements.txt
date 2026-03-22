@@ -1,0 +1,2 @@
+# Pin loosely; align with Fetch innovation-lab examples as needed.
+uagents>=0.22.0

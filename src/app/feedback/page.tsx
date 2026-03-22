@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import SimpleAssistantMarkdown from "@/components/SimpleAssistantMarkdown";
 import {
   analyzeCallFull,
   type CallData,
@@ -139,6 +138,30 @@ export default function FeedbackPage() {
       window.clearTimeout(timeoutId);
     };
   }, []);
+
+  /** Best-effort ping to local Fetch uAgent (metadata only — see fetch-bridge/). */
+  useEffect(() => {
+    if (!callData) return;
+    const key = `fetchBridgeSession:${callData.timestamp}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      /* ignore */
+    }
+    const coachTurns = callData.messages.filter((m) => m.role === "user").length;
+    void fetch("/api/fetch-bridge/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        persona_id: callData.personaId ?? "",
+        mode_id: callData.modeId ?? "",
+        duration_sec: callData.duration ?? 0,
+        coach_turns: coachTurns,
+        stripe_sent: Boolean(callData.stripeLinkSent),
+      }),
+    }).catch(() => {});
+  }, [callData]);
 
   if (isLoading) {
     return (
@@ -405,44 +428,7 @@ export default function FeedbackPage() {
                       }`}
                     >
                       {msg.role === "assistant" ? (
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            p: ({ children }) => (
-                              <p className="my-2 leading-relaxed first:mt-0 last:mb-0">
-                                {children}
-                              </p>
-                            ),
-                            ul: ({ children }) => (
-                              <ul className="my-2 list-disc space-y-1 pl-5 first:mt-0 last:mb-0">
-                                {children}
-                              </ul>
-                            ),
-                            ol: ({ children }) => (
-                              <ol className="my-2 list-decimal space-y-1 pl-5 first:mt-0 last:mb-0">
-                                {children}
-                              </ol>
-                            ),
-                            li: ({ children }) => <li>{children}</li>,
-                            strong: ({ children }) => (
-                              <strong className="font-semibold text-zinc-50">
-                                {children}
-                              </strong>
-                            ),
-                            em: ({ children }) => (
-                              <em className="italic text-zinc-100">
-                                {children}
-                              </em>
-                            ),
-                            code: ({ children }) => (
-                              <code className="rounded bg-black/35 px-1 py-0.5 font-mono text-[12px] text-zinc-100">
-                                {children}
-                              </code>
-                            ),
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
+                        <SimpleAssistantMarkdown>{msg.content}</SimpleAssistantMarkdown>
                       ) : (
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                       )}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FaceLandmarker, PoseLandmarker } from "@mediapipe/tasks-vision";
+import { FACE_MESH_TESSELATION, POSE_CONNECTIONS } from "@/lib/mediapipe-topology";
 
 const MP_VERSION = "0.10.33";
 const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/wasm`;
@@ -30,11 +31,14 @@ function isLiveKitDataChannelNoise(args: unknown[]): boolean {
   return /Unknown DataChannel error on (lossy|reliable)/i.test(text);
 }
 
-/** Draw MediaPipe face landmarks (normalized 0–1 → video pixels). Same mirror as video via CSS. */
-function drawFaceLandmarks(
+type NormLandmark = { x: number; y: number; visibility?: number };
+
+/** Face mesh + optional pose skeleton + points. Normalized 0–1 → pixels; same mirror as video via CSS. */
+function drawVisionOverlay(
   canvas: HTMLCanvasElement | null,
-  landmarks: { x: number; y: number }[] | undefined,
-  video: HTMLVideoElement
+  video: HTMLVideoElement,
+  faceLandmarks: NormLandmark[] | undefined,
+  poseLandmarks: NormLandmark[] | undefined
 ) {
   if (!canvas) return;
   const vw = video.videoWidth;
@@ -50,30 +54,69 @@ function drawFaceLandmarks(
   if (!ctx) return;
   ctx.clearRect(0, 0, vw, vh);
 
-  if (!landmarks?.length) return;
+  const hasFace = !!faceLandmarks?.length;
+  const hasPose = !!poseLandmarks?.length;
+  if (!hasFace && !hasPose) return;
 
-  const rMain = Math.max(0.95, Math.min(vw, vh) * 0.00218);
-  const rFirst = rMain * 1.35;
+  const poseVisible = (lm: NormLandmark) =>
+    lm.visibility === undefined || lm.visibility >= 0.25;
 
-  for (let i = 0; i < landmarks.length; i++) {
-    const lm = landmarks[i];
-    const px = lm.x * vw;
-    const py = lm.y * vh;
-    const r = i === 0 ? rFirst : rMain;
+  if (hasPose && poseLandmarks) {
+    const pl = poseLandmarks;
+    ctx.strokeStyle = "rgba(168, 85, 247, 0.55)";
+    ctx.lineWidth = Math.max(1.1, Math.min(vw, vh) * 0.004);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.arc(px, py, r, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.88)";
-    ctx.lineWidth = Math.max(0.65, r * 0.28);
+    for (const [a, b] of POSE_CONNECTIONS) {
+      const pa = pl[a];
+      const pb = pl[b];
+      if (!pa || !pb || !poseVisible(pa) || !poseVisible(pb)) continue;
+      ctx.moveTo(pa.x * vw, pa.y * vh);
+      ctx.lineTo(pb.x * vw, pb.y * vh);
+    }
     ctx.stroke();
-    ctx.fillStyle = i === 0 ? "#fbbf24" : "#22d3ee";
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(px, py, r * 0.42, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-    ctx.fill();
   }
 
-  const label = `${landmarks.length} pts`;
+  if (hasFace && faceLandmarks) {
+    const fl = faceLandmarks;
+    const n = fl.length;
+    ctx.strokeStyle = "rgba(34, 211, 238, 0.22)";
+    ctx.lineWidth = Math.max(0.55, Math.min(vw, vh) * 0.00135);
+    ctx.beginPath();
+    for (const [a, b] of FACE_MESH_TESSELATION) {
+      if (a >= n || b >= n) continue;
+      const la = fl[a];
+      const lb = fl[b];
+      ctx.moveTo(la.x * vw, la.y * vh);
+      ctx.lineTo(lb.x * vw, lb.y * vh);
+    }
+    ctx.stroke();
+
+    const rMain = Math.max(0.95, Math.min(vw, vh) * 0.00218);
+    const rFirst = rMain * 1.35;
+    for (let i = 0; i < n; i++) {
+      const lm = fl[i];
+      const px = lm.x * vw;
+      const py = lm.y * vh;
+      const r = i === 0 ? rFirst : rMain;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.88)";
+      ctx.lineWidth = Math.max(0.65, r * 0.28);
+      ctx.stroke();
+      ctx.fillStyle = i === 0 ? "#fbbf24" : "#22d3ee";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px, py, r * 0.42, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctx.fill();
+    }
+  }
+
+  const faceCount = faceLandmarks?.length ?? 0;
+  const label = hasFace ? `${faceCount} pts` : hasPose ? "Pose" : "";
+  if (!label) return;
   ctx.font = "bold 9px ui-monospace, monospace";
   const tw = ctx.measureText(label).width;
   ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
@@ -188,6 +231,7 @@ export default function UserCallCamera({
   const rafRef = useRef<number>(0);
   const frameRef = useRef(0);
   const lastPoseRef = useRef({ label: "…", detail: "" });
+  const lastPoseLandmarksRef = useRef<NormLandmark[] | null>(null);
   const lastEmitKey = useRef("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -261,6 +305,7 @@ export default function UserCallCamera({
       setLoading(true);
       setError(null);
       lastPoseRef.current = { label: "…", detail: "" };
+      lastPoseLandmarksRef.current = null;
       lastEmitKey.current = "";
       try {
         console.info = filterTfLiteInfo;
@@ -351,7 +396,12 @@ export default function UserCallCamera({
             const lm0 = faceRes.faceLandmarks?.[0];
 
             if (showLandmarksRef.current) {
-              drawFaceLandmarks(canvasRef.current, lm0, video);
+              drawVisionOverlay(
+                canvasRef.current,
+                video,
+                lm0,
+                lastPoseLandmarksRef.current ?? undefined
+              );
             } else if (canvasRef.current) {
               const c = canvasRef.current.getContext("2d");
               if (c && video.videoWidth > 0) {
@@ -375,7 +425,14 @@ export default function UserCallCamera({
             }
           } catch {
             expr = { label: "Face scan paused", detail: "" };
-            drawFaceLandmarks(canvasRef.current, undefined, video);
+            if (showLandmarksRef.current) {
+              drawVisionOverlay(
+                canvasRef.current,
+                video,
+                undefined,
+                lastPoseLandmarksRef.current ?? undefined
+              );
+            }
           }
 
           let poseLabel = lastPoseRef.current.label;
@@ -383,7 +440,9 @@ export default function UserCallCamera({
           if (poseLandmarker && frameRef.current % 2 === 0) {
             try {
               const poseRes = poseLandmarker.detectForVideo(video, now);
-              const p = inferPosture(poseRes.landmarks[0]);
+              const plm = poseRes.landmarks?.[0];
+              if (plm?.length) lastPoseLandmarksRef.current = plm;
+              const p = inferPosture(plm);
               poseLabel = p.label;
               poseDetail = p.detail;
               lastPoseRef.current = { label: poseLabel, detail: poseDetail };
@@ -492,7 +551,7 @@ export default function UserCallCamera({
                 ? "border-cyan-400/45 bg-cyan-400/15 text-cyan-200"
                 : "border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300"
             }`}
-            title="Face landmark overlay (on-device)"
+            title="Face mesh + pose skeleton (on-device)"
           >
             Mesh
           </button>
