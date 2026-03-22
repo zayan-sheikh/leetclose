@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   analyzeCallFull,
   type CallData,
@@ -16,6 +18,11 @@ import {
   BADGE_DEFS,
 } from "@/lib/gamification";
 import { getPersonaById } from "@/lib/personas";
+
+type DeepDiveMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
   const bar =
@@ -51,6 +58,34 @@ export default function FeedbackPage() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [prospectLabel, setProspectLabel] = useState("Prospect");
+  const [isDeepDiveMode, setIsDeepDiveMode] = useState(false);
+  const [deepDiveMessages, setDeepDiveMessages] = useState<DeepDiveMessage[]>(
+    [],
+  );
+  const [deepDiveInput, setDeepDiveInput] = useState("");
+  const [isDeepDiveLoading, setIsDeepDiveLoading] = useState(false);
+  const [thinkingDots, setThinkingDots] = useState(1);
+  const deepDiveScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isDeepDiveLoading) {
+      setThinkingDots(1);
+      return;
+    }
+
+    const id = window.setInterval(() => {
+      setThinkingDots((prev) => (prev >= 3 ? 1 : prev + 1));
+    }, 380);
+
+    return () => window.clearInterval(id);
+  }, [isDeepDiveLoading]);
+
+  useEffect(() => {
+    if (!isDeepDiveMode) return;
+    const viewport = deepDiveScrollRef.current;
+    if (!viewport) return;
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+  }, [deepDiveMessages, isDeepDiveLoading, isDeepDiveMode]);
 
   useEffect(() => {
     let done = false;
@@ -139,6 +174,81 @@ export default function FeedbackPage() {
   const minutes = Math.floor(callData.duration / 60);
   const seconds = callData.duration % 60;
   const progress = loadProgress();
+
+  const openDeepDive = () => {
+    if (deepDiveMessages.length === 0) {
+      const openingSummary = [
+        "Great work finishing this round. Here is your focused AI deep dive:",
+        "",
+        "What you did well:",
+        ...feedback.didWell.map((item) => `- ${item}`),
+        "",
+        "What to improve:",
+        ...feedback.missed.map((item) => `- ${item}`),
+        "",
+        "Ask me anything and I will break it down into exact lines, sequencing, and next-call reps.",
+      ].join("\n");
+
+      setDeepDiveMessages([{ role: "assistant", content: openingSummary }]);
+    }
+
+    setIsDeepDiveMode(true);
+  };
+
+  const toggleDeepDive = () => {
+    if (!isDeepDiveMode) {
+      openDeepDive();
+      return;
+    }
+    setIsDeepDiveMode(false);
+  };
+
+  const sendDeepDiveMessage = async () => {
+    const cleaned = deepDiveInput.trim();
+    if (!cleaned || isDeepDiveLoading) return;
+
+    const userMessage: DeepDiveMessage = { role: "user", content: cleaned };
+    const nextMessages = [...deepDiveMessages, userMessage];
+    setDeepDiveMessages(nextMessages);
+    setDeepDiveInput("");
+    setIsDeepDiveLoading(true);
+
+    try {
+      const response = await fetch("/api/deepdive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: nextMessages,
+          feedback,
+          scores,
+          prospectLabel,
+          duration: callData.duration,
+        }),
+      });
+
+      const data = await response.json();
+      const aiText =
+        typeof data?.response === "string" && data.response.trim()
+          ? data.response.trim()
+          : "I could not generate the deep dive right now. Try again in a moment.";
+
+      setDeepDiveMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: aiText },
+      ]);
+    } catch {
+      setDeepDiveMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "I hit a network issue while generating your deep dive. Please try again.",
+        },
+      ]);
+    } finally {
+      setIsDeepDiveLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -242,6 +352,161 @@ export default function FeedbackPage() {
                 <li key={i}>• {item}</li>
               ))}
             </ul>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={toggleDeepDive}
+            className={`w-full cursor-pointer rounded-xl border px-6 py-2.5 text-sm font-semibold transition-all ${
+              isDeepDiveMode
+                ? "border-cyan-300/55 bg-cyan-500/12 text-cyan-100"
+                : "border-cyan-400/30 bg-cyan-500/5 text-cyan-200 hover:border-cyan-300/55 hover:bg-cyan-500/10"
+            }`}
+          >
+            AI Deep Dive
+          </button>
+        </div>
+
+        <div
+          className={`overflow-hidden transition-all duration-400 ease-out ${
+            isDeepDiveMode
+              ? "mb-6 max-h-[52rem] translate-y-0 opacity-100"
+              : "max-h-0 -translate-y-2 opacity-0"
+          }`}
+          aria-hidden={!isDeepDiveMode}
+        >
+          <div className="card-premium p-5 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-hud text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+                  AI coach
+                </p>
+                <h2 className="font-display mt-1 text-lg font-semibold text-zinc-100">
+                  Deep dive chat
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDeepDiveMode(false)}
+                aria-label="Close AI deep dive"
+                title="Close"
+                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/20 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-border bg-[#0f1422] p-3 sm:p-4">
+              <div
+                ref={deepDiveScrollRef}
+                className="max-h-[24rem] space-y-3 overflow-y-auto pr-1"
+              >
+                {deepDiveMessages.map((msg, i) => (
+                  <div
+                    key={`${msg.role}-${i}`}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[92%] rounded-xl px-3 py-2 text-sm leading-relaxed shadow-sm sm:max-w-[85%] ${
+                        msg.role === "user"
+                          ? "bg-accent text-white"
+                          : "border border-cyan-500/20 bg-[#121b2d] text-zinc-200"
+                      }`}
+                    >
+                      {msg.role === "assistant" ? (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => (
+                              <p className="my-2 leading-relaxed first:mt-0 last:mb-0">
+                                {children}
+                              </p>
+                            ),
+                            ul: ({ children }) => (
+                              <ul className="my-2 list-disc space-y-1 pl-5 first:mt-0 last:mb-0">
+                                {children}
+                              </ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol className="my-2 list-decimal space-y-1 pl-5 first:mt-0 last:mb-0">
+                                {children}
+                              </ol>
+                            ),
+                            li: ({ children }) => <li>{children}</li>,
+                            strong: ({ children }) => (
+                              <strong className="font-semibold text-zinc-50">
+                                {children}
+                              </strong>
+                            ),
+                            em: ({ children }) => (
+                              <em className="italic text-zinc-100">
+                                {children}
+                              </em>
+                            ),
+                            code: ({ children }) => (
+                              <code className="rounded bg-black/35 px-1 py-0.5 font-mono text-[12px] text-zinc-100">
+                                {children}
+                              </code>
+                            ),
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {isDeepDiveLoading && (
+                  <p className="px-1 text-xs font-medium tracking-wide text-zinc-400">
+                    the AI is thinking
+                    <span className="inline-block w-4 text-left">
+                      {".".repeat(thinkingDots)}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-stretch gap-2">
+                <input
+                  type="text"
+                  value={deepDiveInput}
+                  onChange={(e) => setDeepDiveInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void sendDeepDiveMessage();
+                    }
+                  }}
+                  placeholder="Ask for specific improvements, scripts, or objection drills..."
+                  className="min-h-[42px] min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0d111c] px-3.5 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400/40 focus:outline-none focus:ring-1 focus:ring-cyan-400/25"
+                />
+                <button
+                  type="button"
+                  onClick={() => void sendDeepDiveMessage()}
+                  disabled={!deepDiveInput.trim() || isDeepDiveLoading}
+                  className="btn-primary-glow min-h-[42px] shrink-0 rounded-xl px-5 text-sm font-semibold text-white disabled:opacity-45"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
