@@ -16,11 +16,11 @@ import { defaultProgress, loadProgress, personaAllowed } from "@/lib/gamificatio
 const UserCallCamera = dynamic(() => import("@/components/UserCallCamera"), {
   ssr: false,
   loading: () => (
-    <div className="absolute right-2 top-2 z-[2] flex w-[min(calc(100%-1rem),11.25rem)] flex-col overflow-hidden rounded-xl border border-white/[0.12] bg-[#070708] shadow-xl sm:right-3 sm:top-3 sm:w-[12rem]">
-      <div className="relative flex aspect-video items-center justify-center bg-[#0a0a0c]">
+    <div className="flex h-full min-h-[min(28dvh,180px)] w-full min-w-0 flex-col bg-[#070708] lg:min-h-0">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center bg-[#0a0a0c]">
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-400/25 border-t-cyan-400" />
       </div>
-      <div className="border-t border-white/[0.08] px-2.5 py-2 text-center text-[10px] font-medium text-zinc-500">
+      <div className="shrink-0 border-t border-white/[0.08] px-2.5 py-2 text-center text-[10px] font-medium text-zinc-500">
         Preparing your camera…
       </div>
     </div>
@@ -749,38 +749,41 @@ export default function CallPage() {
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* Call stage */}
               <div className="relative min-h-0 flex-1 p-1 sm:p-2">
-                <div className="relative h-full min-h-[160px] overflow-hidden rounded-lg border border-white/10 bg-gradient-to-b from-[#132238] via-[#0f172a] to-[#0a0f18] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:rounded-xl">
+                <div className="relative flex h-full min-h-[160px] flex-col overflow-hidden rounded-lg border border-white/10 bg-gradient-to-b from-[#132238] via-[#0f172a] to-[#0a0f18] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] lg:min-h-0 lg:flex-row sm:rounded-xl">
                   <div
-                    className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-sky-500/15"
+                    className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-sky-500/15 sm:rounded-xl"
                     aria-hidden
                   />
-                  <Avatar
-                    ref={avatarRef}
-                    isTalking={isAiTalking}
-                    isListening={isListening}
-                    displayName={activePersona.displayName}
-                    avatarTone={activePersona.avatarTone}
-                  />
-
-                  <UserCallCamera
-                    enabled={callState === "active"}
-                    isListening={isListening}
-                    isMuted={isMuted}
-                  />
-
-                  {currentTranscript && (
-                    <div className="absolute bottom-4 left-3 right-3 z-[1] max-w-[min(100%,28rem)] sm:bottom-5 sm:left-4">
-                      <div className="rounded-lg border border-sky-400/35 bg-black/75 px-3 py-2 shadow-lg backdrop-blur-md">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-300/90">
-                          You (draft)
-                        </p>
-                        <p className="mt-0.5 text-sm leading-snug text-zinc-100">
-                          {currentTranscript}
-                          <span className="text-sky-300/80">…</span>
-                        </p>
+                  <div className="relative z-0 flex min-h-[min(42dvh,240px)] min-w-0 flex-1 flex-col lg:h-full lg:min-h-0">
+                    <Avatar
+                      ref={avatarRef}
+                      isTalking={isAiTalking}
+                      isListening={isListening}
+                      displayName={activePersona.displayName}
+                      avatarTone={activePersona.avatarTone}
+                    />
+                    {currentTranscript && (
+                      <div className="absolute bottom-3 left-2 right-2 z-[1] max-w-[min(100%,28rem)] sm:bottom-4 sm:left-3 sm:right-3 md:max-w-[min(100%,26rem)]">
+                        <div className="rounded-lg border border-sky-400/35 bg-black/75 px-3 py-2 shadow-lg backdrop-blur-md">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-300/90">
+                            You (draft)
+                          </p>
+                          <p className="mt-0.5 text-sm leading-snug text-zinc-100">
+                            {currentTranscript}
+                            <span className="text-sky-300/80">…</span>
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="relative z-[2] flex min-h-[min(30dvh,200px)] w-full shrink-0 flex-col border-t border-white/10 lg:h-full lg:min-h-0 lg:w-[min(44%,22rem)] lg:border-l lg:border-t-0 xl:w-[min(40%,26rem)]">
+                    <UserCallCamera
+                      layout="docked"
+                      enabled={callState === "active"}
+                      isListening={isListening}
+                      isMuted={isMuted}
+                    />
+                  </div>
                 </div>
               </div>
 

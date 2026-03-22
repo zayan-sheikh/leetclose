@@ -218,13 +218,15 @@ const Avatar = forwardRef<AvatarHandle, AvatarProps>(function Avatar(
     <div className="relative flex h-full w-full min-h-0 flex-col [container-type:size]">
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e] to-[#0a0a15] rounded-xl" />
 
-      {isTalking && (
-        <div className="absolute left-1/2 top-1/2 h-[min(100cqh,100cqw)] w-[min(100cqh,100cqw)] max-h-[70%] max-w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl animate-pulse" />
-      )}
-
-      <div className="relative z-0 flex min-h-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 pb-1 sm:gap-2 sm:px-2 sm:pb-2">
-        <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+      <div className="relative z-0 flex min-h-0 flex-1 flex-col items-start justify-center gap-1.5 px-1 pb-1 sm:gap-2 sm:px-2 sm:pb-2">
+        <div className="relative flex min-h-0 w-full flex-1 items-center justify-start">
           <div className="relative h-[min(100cqh,100cqw)] w-[min(100cqh,100cqw)] max-h-full max-w-full min-h-0 min-w-0">
+            {isTalking && (
+              <div
+                className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[min(72cqh,72cqw)] w-[min(72cqh,72cqw)] max-h-[78%] max-w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl animate-pulse"
+                aria-hidden
+              />
+            )}
             {isTalking && (
               <div className="pointer-events-none absolute -inset-1 z-10 rounded-2xl border-2 border-accent/30 animate-pulse-ring" />
             )}
@@ -264,7 +266,7 @@ const Avatar = forwardRef<AvatarHandle, AvatarProps>(function Avatar(
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 pb-0.5">
+        <div className="flex w-full shrink-0 items-center justify-start gap-2 px-1 pb-0.5 sm:px-2">
           <span className="text-white text-sm font-medium">{displayName}</span>
           {isTalking && (
             <div className="flex gap-0.5 items-center">

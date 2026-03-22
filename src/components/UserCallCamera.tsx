@@ -84,6 +84,10 @@ interface UserCallCameraProps {
   enabled: boolean;
   isListening: boolean;
   isMuted: boolean;
+  /**
+   * `floating` — small PiP (default). `docked` — fills a side column on the call stage.
+   */
+  layout?: "floating" | "docked";
   /** Optional: parent can log or use for future coaching */
   onReading?: (r: PresenceReading | null) => void;
 }
@@ -168,6 +172,7 @@ export default function UserCallCamera({
   enabled,
   isListening,
   isMuted,
+  layout = "floating",
   onReading,
 }: UserCallCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -412,9 +417,19 @@ export default function UserCallCamera({
     };
   }, [enabled, notify]);
 
+  const rootClass =
+    layout === "docked"
+      ? "relative z-[2] flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-[#070708]"
+      : "absolute right-2 top-2 z-[2] w-[min(calc(100%-1rem),11.25rem)] overflow-hidden rounded-xl border border-white/[0.12] bg-[#070708] shadow-[0_16px_36px_-10px_rgba(0,0,0,0.8),0_0_0_1px_rgba(0,0,0,0.5)] ring-1 ring-white/[0.06] sm:right-3 sm:top-3 sm:w-[12rem]";
+
+  const videoShellClass =
+    layout === "docked"
+      ? "relative min-h-0 flex-1 bg-[#0a0a0c]"
+      : "relative aspect-video bg-[#0a0a0c]";
+
   return (
-    <div className="absolute right-2 top-2 z-[2] w-[min(calc(100%-1rem),11.25rem)] overflow-hidden rounded-xl border border-white/[0.12] bg-[#070708] shadow-[0_16px_36px_-10px_rgba(0,0,0,0.8),0_0_0_1px_rgba(0,0,0,0.5)] ring-1 ring-white/[0.06] sm:right-3 sm:top-3 sm:w-[12rem]">
-      <div className="relative aspect-video bg-[#0a0a0c]">
+    <div className={rootClass}>
+      <div className={videoShellClass}>
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-white/[0.04]"
           aria-hidden
@@ -448,7 +463,11 @@ export default function UserCallCamera({
           </div>
         )}
       </div>
-      <div className="space-y-1.5 border-t border-white/[0.08] bg-[#0c0c0e]/95 px-2.5 py-2 backdrop-blur-md">
+      <div
+        className={`space-y-1.5 border-white/[0.08] bg-[#0c0c0e]/95 px-2.5 py-2 backdrop-blur-md ${
+          layout === "docked" ? "shrink-0 border-t" : "border-t"
+        }`}
+      >
         <div className="flex items-center justify-between gap-2">
           <span
             className={`text-[10px] font-medium ${
