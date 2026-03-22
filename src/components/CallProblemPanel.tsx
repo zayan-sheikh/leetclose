@@ -16,7 +16,7 @@ function difficultyMeta(
     case "beginner":
       return {
         label: "Easy",
-        className: "bg-emerald-500/20 text-emerald-700 ring-1 ring-emerald-400/50 dark:text-emerald-200",
+        className: "bg-cyan-500/20 text-cyan-900 ring-1 ring-cyan-400/45 dark:text-cyan-100",
       };
     case "intermediate":
       return {
@@ -31,7 +31,7 @@ function difficultyMeta(
     case "killer":
       return {
         label: "Hard",
-        className: "bg-rose-500/20 text-rose-900 ring-1 ring-rose-400/45 dark:text-rose-100",
+        className: "bg-violet-500/20 text-violet-950 ring-1 ring-violet-400/45 dark:text-violet-100",
       };
     default:
       return {
@@ -102,7 +102,7 @@ export default function CallProblemPanel({
             </h2>
             {variant === "active" && (
               <span
-                className="rounded border border-emerald-400/40 bg-emerald-500/15 px-1.5 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-300"
+                className="rounded border border-success/40 bg-success/15 px-1.5 py-0.5 text-xs font-medium text-cyan-950 dark:text-success"
                 title="Session in progress"
               >
                 ✓ Live

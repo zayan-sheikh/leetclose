@@ -215,54 +215,56 @@ const Avatar = forwardRef<AvatarHandle, AvatarProps>(function Avatar(
   }, []);
 
   return (
-    <div className="relative flex items-center justify-center w-full h-full">
+    <div className="relative flex h-full w-full min-h-0 flex-col [container-type:size]">
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e] to-[#0a0a15] rounded-xl" />
 
       {isTalking && (
-        <div className="absolute w-48 h-48 bg-accent/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute left-1/2 top-1/2 h-[min(100cqh,100cqw)] w-[min(100cqh,100cqw)] max-h-[70%] max-w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl animate-pulse" />
       )}
 
-      <div className="relative flex flex-col items-center gap-4 w-full max-w-md px-4">
-        <div className="relative w-full aspect-square max-h-[min(70vh,420px)]">
-          {isTalking && (
-            <div className="absolute -inset-1 rounded-2xl border-2 border-accent/30 animate-pulse-ring pointer-events-none z-10" />
-          )}
+      <div className="relative z-0 flex min-h-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 pb-1 sm:gap-2 sm:px-2 sm:pb-2">
+        <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+          <div className="relative h-[min(100cqh,100cqw)] w-[min(100cqh,100cqw)] max-h-full max-w-full min-h-0 min-w-0">
+            {isTalking && (
+              <div className="pointer-events-none absolute -inset-1 z-10 rounded-2xl border-2 border-accent/30 animate-pulse-ring" />
+            )}
 
-          <div
-            className={`relative w-full h-full rounded-2xl overflow-hidden bg-black/80 ring-2 shadow-lg ${ring}`}
-          >
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              playsInline
-              autoPlay
-            />
-
-            {isListening && status === "ready" && (
-              <span
-                className="absolute top-3 right-3 z-20 w-2.5 h-2.5 rounded-full bg-success shadow-lg shadow-success/40 animate-pulse"
-                title="Listening"
+            <div
+              className={`relative h-full w-full overflow-hidden rounded-xl bg-black/80 shadow-lg ring-2 sm:rounded-2xl ${ring}`}
+            >
+              <video
+                ref={videoRef}
+                className="h-full w-full object-cover"
+                playsInline
+                autoPlay
               />
-            )}
 
-            {status === "loading" && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm text-white/90">
-                Connecting to Live Avatar…
-              </div>
-            )}
+              {isListening && status === "ready" && (
+                <span
+                  className="absolute right-3 top-3 z-20 h-2.5 w-2.5 animate-pulse rounded-full bg-success shadow-lg shadow-success/40"
+                  title="Listening"
+                />
+              )}
 
-            {status === "error" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 px-4 text-center text-sm text-white/90">
-                <p>Could not load the avatar.</p>
-                {errorMessage && (
-                  <p className="text-xs text-white/60">{errorMessage}</p>
-                )}
-              </div>
-            )}
+              {status === "loading" && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm text-white/90">
+                  Connecting to Live Avatar…
+                </div>
+              )}
+
+              {status === "error" && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 px-4 text-center text-sm text-white/90">
+                  <p>Could not load the avatar.</p>
+                  {errorMessage && (
+                    <p className="text-xs text-white/60">{errorMessage}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 pb-0.5">
           <span className="text-white text-sm font-medium">{displayName}</span>
           {isTalking && (
             <div className="flex gap-0.5 items-center">

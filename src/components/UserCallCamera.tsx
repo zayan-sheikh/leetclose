@@ -452,7 +452,7 @@ export default function UserCallCamera({
         <div className="flex items-center justify-between gap-2">
           <span
             className={`text-[10px] font-medium ${
-              isMuted ? "text-rose-300/90" : isListening ? "text-cyan-300/90" : "text-zinc-400"
+              isMuted ? "text-danger/90" : isListening ? "text-cyan-300/90" : "text-zinc-400"
             }`}
           >
             {isMuted ? "Mic muted" : isListening ? "Listening" : "Mic on"}

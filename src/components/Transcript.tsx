@@ -36,8 +36,8 @@ export default function Transcript({
           </h3>
           <p className="text-[10px] text-zinc-500 sm:text-[11px]">Updates as you go</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300/95">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success/95">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
           Live
         </span>
       </div>

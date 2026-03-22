@@ -115,9 +115,9 @@ export default function LandingPage() {
         <div className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[#08080a] shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_32px_80px_-24px_rgba(34,211,238,0.12),0_24px_60px_-30px_rgba(0,0,0,0.85)]">
           <div className="flex items-center justify-between border-b border-white/[0.08] bg-[#0e0e12] px-4 py-2.5">
             <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-rose-500/70" />
-              <div className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/70" />
+              <div className="h-2.5 w-2.5 rounded-full bg-danger/75" />
+              <div className="h-2.5 w-2.5 rounded-full bg-warning/80" />
+              <div className="h-2.5 w-2.5 rounded-full bg-success/80" />
             </div>
             <span className="font-hud text-[10px] uppercase tracking-widest text-zinc-500">
               CloserArena · practice session

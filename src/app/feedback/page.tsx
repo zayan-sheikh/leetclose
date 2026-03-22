@@ -20,10 +20,10 @@ import { getPersonaById } from "@/lib/personas";
 function ScoreBar({ label, score }: { label: string; score: number }) {
   const bar =
     score >= 70
-      ? "bg-gradient-to-r from-emerald-600 to-cyan-500 shadow-[0_0_16px_-4px_rgba(52,211,153,0.45)]"
+      ? "bg-gradient-to-r from-sky-500 to-cyan-500 shadow-[0_0_16px_-4px_var(--glow-success)]"
       : score >= 40
-        ? "bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_14px_-4px_rgba(251,191,36,0.35)]"
-        : "bg-gradient-to-r from-rose-600 to-orange-500 shadow-[0_0_14px_-4px_rgba(248,113,113,0.35)]";
+        ? "bg-gradient-to-r from-amber-600 to-warning shadow-[0_0_14px_-4px_rgba(232,197,71,0.35)]"
+        : "bg-gradient-to-r from-danger to-orange-600 shadow-[0_0_14px_-4px_var(--glow-danger)]";
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between text-sm">
@@ -161,7 +161,7 @@ export default function FeedbackPage() {
 
         <div className="mb-6 grid gap-4 md:grid-cols-2">
           <div className="card-premium p-6 pt-7">
-            <h2 className="font-display text-base font-semibold text-emerald-400/95">
+            <h2 className="font-display text-base font-semibold text-success/95">
               What you did well
             </h2>
             <ul className="mt-3 space-y-2 text-sm text-zinc-400">

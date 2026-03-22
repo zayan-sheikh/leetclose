@@ -665,7 +665,7 @@ export default function CallPage() {
               <button
                 type="button"
                 onClick={startCall}
-                className="mt-8 w-full rounded-xl bg-[#2cbb5d] py-3.5 text-sm font-bold text-white shadow-[0_0_32px_-6px_rgba(44,187,93,0.55)] transition-all hover:brightness-110 active:scale-[0.99] sm:py-4 sm:text-base"
+                className="mt-8 w-full rounded-xl bg-gradient-to-r from-sky-500 to-cyan-600 py-3.5 text-sm font-bold text-white shadow-[0_0_32px_-6px_var(--glow-cyan)] transition-all hover:brightness-110 active:scale-[0.99] sm:py-4 sm:text-base"
               >
                 Submit — Join call
               </button>
@@ -748,8 +748,8 @@ export default function CallPage() {
           <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* Call stage */}
-              <div className="relative min-h-0 flex-1 p-2 sm:p-3">
-                <div className="relative h-full min-h-[160px] overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-[#132238] via-[#0f172a] to-[#0a0f18] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+              <div className="relative min-h-0 flex-1 p-1 sm:p-2">
+                <div className="relative h-full min-h-[160px] overflow-hidden rounded-lg border border-white/10 bg-gradient-to-b from-[#132238] via-[#0f172a] to-[#0a0f18] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:rounded-xl">
                   <div
                     className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-sky-500/15"
                     aria-hidden
@@ -853,7 +853,7 @@ export default function CallPage() {
                     onClick={toggleMute}
                     className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-all ${
                       isMuted
-                        ? "bg-rose-600 text-white shadow-[0_0_28px_-6px_rgba(225,29,72,0.55)] ring-2 ring-rose-400/30"
+                        ? "bg-danger text-white shadow-[0_0_28px_-6px_var(--glow-danger)] ring-2 ring-danger/35"
                         : "bg-[#1c1c21] text-white ring-1 ring-white/12 hover:bg-[#25252c] hover:ring-sky-400/30"
                     }`}
                     title={isMuted ? "Unmute microphone" : "Mute microphone"}
@@ -891,7 +891,7 @@ export default function CallPage() {
                     disabled={stripeSent || sendingStripe}
                     className={`min-h-12 shrink-0 rounded-full px-4 text-sm font-semibold transition-all sm:px-5 ${
                       stripeSent
-                        ? "border border-emerald-400/35 bg-emerald-500/15 text-emerald-200"
+                        ? "border border-success/35 bg-success/15 text-zinc-50"
                         : "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-[0_0_28px_-8px_rgba(14,165,233,0.45)] hover:brightness-110"
                     } disabled:opacity-50`}
                   >
@@ -902,7 +902,7 @@ export default function CallPage() {
                     type="button"
                     onClick={endCall}
                     title="End call — save results & feedback"
-                    className="min-h-12 shrink-0 rounded-lg border border-rose-500/35 bg-gradient-to-r from-rose-600 to-red-600 px-3 py-2 text-xs font-semibold text-white shadow-[0_0_18px_-6px_rgba(248,113,113,0.4)] transition-all hover:brightness-110 sm:px-4 sm:text-sm"
+                    className="min-h-12 shrink-0 rounded-lg border border-danger/40 bg-gradient-to-r from-danger to-orange-700 px-3 py-2 text-xs font-semibold text-white shadow-[0_0_18px_-6px_var(--glow-danger)] transition-all hover:brightness-110 sm:px-4 sm:text-sm"
                   >
                     End call
                   </button>

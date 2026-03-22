@@ -73,7 +73,7 @@ export default function SettingsPage() {
               Save profile
             </button>
             {saved && (
-              <span className="font-hud text-xs font-semibold uppercase tracking-wide text-emerald-400">
+              <span className="font-hud text-xs font-semibold uppercase tracking-wide text-success">
                 Saved
               </span>
             )}
@@ -94,7 +94,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={signOut}
-            className="block rounded-xl border border-rose-500/35 bg-rose-500/10 px-5 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:bg-rose-500/15"
+            className="block rounded-xl border border-danger/35 bg-danger/10 px-5 py-2.5 text-sm font-semibold text-zinc-100 transition-colors hover:bg-danger/15"
           >
             Sign out (clear session)
           </button>

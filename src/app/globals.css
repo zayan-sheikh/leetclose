@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* Core neutrals + brand blues unchanged */
   --background: #0c1629;
   --foreground: #f0f9ff;
   --card: #132338;
@@ -10,11 +11,14 @@
   --accent: #7dd3fc;
   --accent-hover: #38bdf8;
   --accent-secondary: #a5f3fc;
-  --success: #86efac;
-  --danger: #fb7185;
-  --warning: #fcd34d;
+  /* CVD-friendly semantics (Okabe–Ito inspired): avoid red vs green as the only contrast */
+  --success: #56b4c9;
+  --danger: #d4573c;
+  --warning: #e8c547;
   --glow-cyan: rgba(125, 211, 252, 0.22);
   --glow-sky: rgba(56, 189, 248, 0.18);
+  --glow-success: rgba(86, 180, 201, 0.35);
+  --glow-danger: rgba(212, 87, 60, 0.45);
 }
 
 @theme inline {

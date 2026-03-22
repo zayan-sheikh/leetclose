@@ -99,7 +99,7 @@ export default function DashboardPage() {
             <div className="flex items-baseline justify-between text-xs text-sky-400/80">
               <span>
                 {lv.isMax ? (
-                  <span className="text-emerald-300/90">Max level — keep grinding XP</span>
+                  <span className="text-success/90">Max level — keep grinding XP</span>
                 ) : (
                   <>
                     <span className="font-hud tabular-nums text-sky-200">
@@ -124,7 +124,7 @@ export default function DashboardPage() {
 
         <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile label="Total XP" value={progress.xp.toLocaleString()} accent="sky" />
-          <StatTile label="Best score" value={String(progress.bestOverall)} accent="emerald" />
+          <StatTile label="Best score" value={String(progress.bestOverall)} accent="success" />
           <StatTile
             label="Streak"
             value={`${progress.streak} day${progress.streak === 1 ? "" : "s"}`}
@@ -151,7 +151,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => router.push("/leaderboard")}
-                  className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 px-5 py-3 text-sm font-medium text-emerald-200/90 transition-colors hover:bg-emerald-500/10"
+                  className="rounded-xl border border-success/30 bg-success/5 px-5 py-3 text-sm font-medium text-zinc-50/90 transition-colors hover:bg-success/10"
                 >
                   View leaderboard
                 </button>
@@ -193,14 +193,14 @@ export default function DashboardPage() {
                 <div>
                   <h2 className={panelTitle}>Daily challenge</h2>
                   <p className="mt-1 text-sm text-sky-300/85">
-                    Hit <strong className="font-medium text-emerald-200">65+</strong> overall on any call
+                    Hit <strong className="font-medium text-success">65+</strong> overall on any call
                     today.
                   </p>
                 </div>
                 <span
                   className={`shrink-0 rounded-md border px-2.5 py-1 font-hud text-[10px] font-bold uppercase tracking-wide ${
                     progress.dailyChallengeDone
-                      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                      ? "border-success/30 bg-success/10 text-zinc-50"
                       : "border-amber-400/30 bg-amber-500/10 text-amber-200"
                   }`}
                 >
@@ -249,14 +249,14 @@ export default function DashboardPage() {
                     key={rung.id}
                     className={`flex items-center gap-3 rounded-lg border px-3 py-2 ${
                       rung.unlocked
-                        ? "border-emerald-400/25 bg-emerald-500/[0.06]"
+                        ? "border-success/25 bg-success/[0.06]"
                         : "border-sky-500/22 bg-sky-950/32"
                     }`}
                   >
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-hud text-[11px] font-bold ${
                         rung.unlocked
-                          ? "bg-emerald-500/15 text-emerald-200"
+                          ? "bg-success/15 text-zinc-50"
                           : "bg-sky-800/45 text-sky-400/75"
                       }`}
                     >
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                       {rung.label}
                     </span>
                     {rung.unlocked ? (
-                      <span className="font-hud text-[10px] font-semibold uppercase tracking-wide text-emerald-300/90">
+                      <span className="font-hud text-[10px] font-semibold uppercase tracking-wide text-success/90">
                         Live
                       </span>
                     ) : (
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                     >
                       <span className={open ? "text-sky-200" : "text-sky-500/65"}>{p.displayName}</span>
                       <span
-                        className={`shrink-0 text-right ${open ? "text-emerald-300/80" : "text-sky-500/65"}`}
+                        className={`shrink-0 text-right ${open ? "text-success/85" : "text-sky-500/65"}`}
                         title={gate ?? undefined}
                       >
                         {open ? "Open" : gate ?? "Locked"}
@@ -349,17 +349,17 @@ function StatTile({
 }: {
   label: string;
   value: string;
-  accent: "sky" | "emerald" | "amber" | "violet";
+  accent: "sky" | "success" | "amber" | "violet";
 }) {
   const border = {
     sky: "border-l-4 border-l-sky-300/55",
-    emerald: "border-l-4 border-l-emerald-300/55",
+    success: "border-l-4 border-l-success/70",
     amber: "border-l-4 border-l-amber-300/55",
     violet: "border-l-4 border-l-violet-300/55",
   }[accent];
   const valueColor = {
     sky: "text-sky-100",
-    emerald: "text-emerald-100",
+    success: "text-zinc-50",
     amber: "text-amber-100",
     violet: "text-violet-100",
   }[accent];

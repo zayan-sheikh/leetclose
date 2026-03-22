@@ -27,18 +27,20 @@ export default function CallTimer({ isActive, startTime }: CallTimerProps) {
     <div
       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-xs tabular-nums tracking-tight ${
         isActive
-          ? "border-red-500/35 bg-red-950/40 text-red-100/95"
+          ? "border-danger/40 bg-danger/15 text-zinc-100"
           : "border-white/10 bg-white/[0.04] text-zinc-500"
       }`}
     >
       <span className="flex items-center gap-1.5">
         <span
           className={`h-2 w-2 rounded-full ${
-            isActive ? "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.7)] animate-pulse" : "bg-zinc-600"
+            isActive
+              ? "bg-danger shadow-[0_0_10px_var(--glow-danger)] animate-pulse"
+              : "bg-zinc-600"
           }`}
           aria-hidden
         />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-red-200/90">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-danger/90">
           Live
         </span>
       </span>
