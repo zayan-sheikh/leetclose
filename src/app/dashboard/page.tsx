@@ -240,7 +240,7 @@ export default function DashboardPage() {
                   className={`shrink-0 rounded-md border px-2.5 py-1 font-hud text-[10px] font-bold uppercase tracking-wide ${
                     progress.dailyChallengeDone
                       ? "border-success/30 bg-success/10 text-foreground dark:text-zinc-50"
-                      : "border-amber-400/30 bg-amber-500/12 text-amber-900 dark:text-amber-100"
+                      : "border-amber-400/30 bg-amber-500/12 text-amber-400 dark:text-amber-100"
                   }`}
                 >
                   {progress.dailyChallengeDone ? "Done" : "Open"}

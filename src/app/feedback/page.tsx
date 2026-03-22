@@ -49,28 +49,72 @@ export default function FeedbackPage() {
     scores: FullScores;
     feedback: ExtendedFeedback;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [prospectLabel, setProspectLabel] = useState("Prospect");
 
   useEffect(() => {
-    const stored = localStorage.getItem("closearena_last_call");
-    if (!stored) return;
-    const data = JSON.parse(stored) as CallData;
-    setCallData(data);
-    setProspectLabel(getPersonaById(data.personaId).firstName);
-    const result = analyzeCallFull(data);
-    setAnalysis(result);
+    let done = false;
 
-    let userName = "Coach";
-    try {
-      const u = localStorage.getItem("closearena_user");
-      if (u) userName = JSON.parse(u).name || JSON.parse(u).email || "Coach";
-    } catch {
-      /* ignore */
-    }
-    const prev = loadProgress();
-    const next = applyCallToProgress(prev, result.scores, userName);
-    saveProgress(next);
+    const hydrateFromStorage = () => {
+      const stored = localStorage.getItem("closearena_last_call");
+      if (!stored) return false;
+
+      try {
+        const data = JSON.parse(stored) as CallData;
+        setCallData(data);
+        setProspectLabel(getPersonaById(data.personaId).firstName);
+
+        const result = analyzeCallFull(data);
+        setAnalysis(result);
+
+        let userName = "Coach";
+        try {
+          const u = localStorage.getItem("closearena_user");
+          if (u) userName = JSON.parse(u).name || JSON.parse(u).email || "Coach";
+        } catch {
+          /* ignore */
+        }
+
+        const prev = loadProgress();
+        const next = applyCallToProgress(prev, result.scores, userName);
+        saveProgress(next);
+        done = true;
+        setIsLoading(false);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (hydrateFromStorage()) return;
+
+    const pollId = window.setInterval(() => {
+      if (done) return;
+      hydrateFromStorage();
+    }, 400);
+
+    const timeoutId = window.setTimeout(() => {
+      if (!done) setIsLoading(false);
+    }, 12000);
+
+    return () => {
+      done = true;
+      window.clearInterval(pollId);
+      window.clearTimeout(timeoutId);
+    };
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center bg-background">
+        <div className="page-mesh-bg opacity-50" aria-hidden />
+        <div className="relative flex flex-col items-center gap-4 text-center">
+          <div className="h-9 w-9 animate-spin rounded-full border-2 border-accent/30 border-t-accent" />
+          <p className="text-sm text-muted">Loading your call feedback...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!callData || !analysis) {
     return (

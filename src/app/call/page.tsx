@@ -35,6 +35,7 @@ type CallState = "waiting" | "active" | "ended";
 
 /** After this much quiet time with interim text, we treat your turn as done (send + auto-mute). */
 const VOICE_END_SILENCE_MS = 1000;
+const CALL_TIME_LIMIT_MS = 65_000;
 
 /**
  * If HeyGen never resolves (SDK / room bug), we must still clear `isAiTalking` or the text field
@@ -58,6 +59,7 @@ export default function CallPage() {
   const [speechHint, setSpeechHint] = useState<string | null>(null);
   const [typedLine, setTypedLine] = useState("");
   const [showSessionLog, setShowSessionLog] = useState(false);
+  const [showUpgradeOverlay, setShowUpgradeOverlay] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const shouldListenRef = useRef(false);
@@ -73,6 +75,7 @@ export default function CallPage() {
   const modeIdRef = useRef(modeId);
   const isMutedRef = useRef(isMuted);
   const currentTranscriptRef = useRef("");
+  const timeLimitReachedRef = useRef(false);
   /** Breaks circular deps: `sendToAI` must resume the mic after the prospect speaks. */
   const startListeningRef = useRef<(() => void) | null>(null);
 
@@ -193,6 +196,7 @@ export default function CallPage() {
 
   const sendToAI = useCallback(
     async (userText: string) => {
+      if (timeLimitReachedRef.current) return;
       const cleaned = userText.trim();
       if (!cleaned) return;
 
@@ -239,6 +243,7 @@ export default function CallPage() {
       } finally {
         window.clearTimeout(chatAbortTimer);
         if (callStateRef.current !== "active") return;
+        if (timeLimitReachedRef.current) return;
         isMutedRef.current = false;
         setIsMuted(false);
         shouldListenRef.current = true;
@@ -258,6 +263,7 @@ export default function CallPage() {
    */
   const finalizeVoiceTurn = useCallback(
     async (text: string) => {
+      if (timeLimitReachedRef.current) return;
       const cleaned = text.trim();
       if (!cleaned || awaitingAiRef.current) return;
 
@@ -370,6 +376,7 @@ export default function CallPage() {
       if (
         shouldListenRef.current &&
         callStateRef.current === "active" &&
+        !timeLimitReachedRef.current &&
         !awaitingAiRef.current &&
         !isMutedRef.current
       ) {
@@ -390,6 +397,7 @@ export default function CallPage() {
       if (
         shouldListenRef.current &&
         callStateRef.current === "active" &&
+        !timeLimitReachedRef.current &&
         !awaitingAiRef.current &&
         !isMutedRef.current
       ) {
@@ -412,6 +420,7 @@ export default function CallPage() {
   startListeningRef.current = startListening;
 
   const sendTypedReply = useCallback(() => {
+    if (timeLimitReachedRef.current) return;
     const t = typedLine.trim();
     if (!t || isAiTalking) return;
     setTypedLine("");
@@ -430,6 +439,54 @@ export default function CallPage() {
     void sendToAI(t);
   }, [typedLine, isAiTalking, sendToAI]);
 
+  const stopRealtimeCall = useCallback(() => {
+    setCallState("ended");
+    setIsListening(false);
+    setIsAiTalking(false);
+    shouldListenRef.current = false;
+    awaitingAiRef.current = false;
+    clearSilenceFlushTimer();
+    setCurrentTranscript("");
+    currentTranscriptRef.current = "";
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
+    }
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, [clearSilenceFlushTimer]);
+
+  const triggerTimeLimit = useCallback(() => {
+    if (timeLimitReachedRef.current) return;
+    timeLimitReachedRef.current = true;
+    stopRealtimeCall();
+    setShowUpgradeOverlay(true);
+  }, [stopRealtimeCall]);
+
+  useEffect(() => {
+    if (callState !== "active" || !callStartTime || showUpgradeOverlay) return;
+
+    const elapsed = Date.now() - callStartTime;
+    const remaining = CALL_TIME_LIMIT_MS - elapsed;
+    if (remaining <= 0) {
+      triggerTimeLimit();
+      return;
+    }
+
+    const id = window.setTimeout(() => {
+      triggerTimeLimit();
+    }, remaining);
+
+    return () => window.clearTimeout(id);
+  }, [callState, callStartTime, showUpgradeOverlay, triggerTimeLimit]);
+
   const startCall = useCallback(async () => {
     const p = loadProgress();
     const persona = getPersonaById(personaId);
@@ -442,6 +499,8 @@ export default function CallPage() {
 
     localStorage.setItem("closearena_call_persona", personaId);
     localStorage.setItem("closearena_call_mode", modeId);
+    timeLimitReachedRef.current = false;
+    setShowUpgradeOverlay(false);
 
     setCallState("active");
     setCallStartTime(Date.now());
@@ -488,26 +547,10 @@ export default function CallPage() {
     ]);
     await speak(greeting);
     startListening();
-  }, [personaId, modeId, speak, startListening]);
+  }, [personaId, modeId, speak, startListening, getProfile]);
 
   const endCall = useCallback(() => {
-    setCallState("ended");
-    setIsListening(false);
-    setIsAiTalking(false);
-    shouldListenRef.current = false;
-    awaitingAiRef.current = false;
-    clearSilenceFlushTimer();
-    setCurrentTranscript("");
-    currentTranscriptRef.current = "";
-
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopRealtimeCall();
 
     const callData = {
       messages: messagesRef.current,
@@ -521,9 +564,10 @@ export default function CallPage() {
     };
     localStorage.setItem("closearena_last_call", JSON.stringify(callData));
     window.location.href = "/feedback";
-  }, [callStartTime, personaId, modeId, stripeSent, clearSilenceFlushTimer]);
+  }, [callStartTime, personaId, modeId, stripeSent, stopRealtimeCall]);
 
   const sendStripeLink = useCallback(async () => {
+    if (timeLimitReachedRef.current) return;
     if (stripeSent || sendingStripe) return;
     setSendingStripe(true);
     const line =
@@ -570,6 +614,7 @@ export default function CallPage() {
       setSendingStripe(false);
       setTimeout(() => {
         if (callStateRef.current !== "active") return;
+        if (timeLimitReachedRef.current) return;
         isMutedRef.current = false;
         setIsMuted(false);
         shouldListenRef.current = true;
@@ -583,6 +628,7 @@ export default function CallPage() {
   }, [getProfile, speak, stripeSent, sendingStripe]);
 
   const toggleMute = useCallback(() => {
+    if (timeLimitReachedRef.current) return;
     if (isMuted) {
       shouldListenRef.current = true;
       isMutedRef.current = false;
@@ -628,7 +674,7 @@ export default function CallPage() {
             ← Problem list
           </Link>
           <span className="font-display text-xs font-semibold tracking-wide text-foreground">
-            CloserArena <span className="text-muted">·</span>{" "}
+            LeetClose <span className="text-muted">·</span>{" "}
             <span style={{ color: "#ffa116" }} className="font-mono">
               practice
             </span>
@@ -1055,6 +1101,78 @@ export default function CallPage() {
           </div>
         </div>
       </div>
+
+      {showUpgradeOverlay && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-4xl rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-7">
+            <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
+              Upgrade plan to tier 2 or 3 for more time with {activePersona.firstName}!
+            </h2>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <section className="flex flex-col rounded-xl border border-border bg-background/70 p-4 text-sm text-muted">
+                <p className="font-semibold text-foreground">Starter Rep, Tier 1 (Free):</p>
+                <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed">
+                  <li>Limited practice sessions</li>
+                  <li>Basic sales scenarios</li>
+                  <li>1 user</li>
+                </ul>
+                <button
+                  type="button"
+                  disabled
+                  className="mt-auto w-full rounded-lg border border-border bg-card-hover px-3 py-2 text-sm font-semibold text-muted opacity-70"
+                >
+                  Current plan
+                </button>
+              </section>
+
+              <section className="flex flex-col rounded-xl border border-accent/55 bg-accent/12 p-4 text-sm text-muted shadow-[0_0_0_1px_rgba(67,89,226,0.22)]">
+                <p className="font-semibold text-foreground">Pro Seller, Tier 2 ($29/mo)</p>
+                <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed">
+                  <li>Unlimited practice sessions</li>
+                  <li>Multiple call types</li>
+                  <li>Instant AI feedback</li>
+                  <li>Objection handling + closing drills</li>
+                  <li>1 user</li>
+                </ul>
+                <button
+                  type="button"
+                  className="btn-primary-glow mt-auto w-full rounded-lg px-3 py-2 text-sm font-semibold"
+                >
+                  Upgrade now
+                </button>
+              </section>
+
+              <section className="flex flex-col rounded-xl border border-accent/70 bg-[#1a2147] p-4 text-sm text-slate-200 shadow-[0_0_0_1px_rgba(52,66,156,0.35)]">
+                <p className="font-semibold text-foreground">Tier 3, Sales Team ($49/mo)</p>
+                <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed">
+                  <li>Everything in Tier 2</li>
+                  <li>Multiple team members</li>
+                  <li>Team performance tracking</li>
+                  <li>Shared scenario library</li>
+                  <li>Manager dashboard</li>
+                </ul>
+                <button
+                  type="button"
+                  className="mt-auto w-full rounded-lg border border-accent/70 bg-accent px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Upgrade now
+                </button>
+              </section>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={endCall}
+                className="cursor-pointer text-sm font-medium text-muted underline underline-offset-2 transition-colors hover:text-foreground"
+              >
+                {'-> '}No thanks, show me my results
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

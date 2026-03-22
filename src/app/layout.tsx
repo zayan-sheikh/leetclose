@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CloserArena AI — Practice Sales Calls Until Closing Feels Automatic",
+  title: "LeetClose AI — Practice Sales Calls Until Closing Feels Automatic",
   description:
     "AI sales call simulator for online fitness coaches. Train against realistic prospects, objections, and closing — with feedback, XP, and streaks.",
 };

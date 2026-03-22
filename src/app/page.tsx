@@ -21,7 +21,7 @@ export default function LandingPage() {
               </div>
             </div>
             <span className="font-display text-lg font-bold tracking-tight">
-              CloserArena{" "}
+              LeetClose{" "}
               <span className="text-muted text-sm font-medium">AI</span>
             </span>
           </div>
@@ -124,7 +124,7 @@ export default function LandingPage() {
               <div className="h-2.5 w-2.5 rounded-full bg-success/80" />
             </div>
             <span className="font-hud text-[10px] uppercase tracking-widest text-zinc-500">
-              CloserArena · practice session
+              LeetClose · practice session
             </span>
             <div className="w-10" />
           </div>
@@ -274,7 +274,7 @@ export default function LandingPage() {
                 CA
               </span>
             </div>
-            <span className="text-sm text-muted">CloserArena AI</span>
+            <span className="text-sm text-muted">LeetClose AI</span>
           </div>
           <p className="text-center text-xs text-zinc-600 sm:text-right">
             Sleek dark UI · built for fast practice loops.
