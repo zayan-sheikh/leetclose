@@ -83,7 +83,12 @@ export default function DeepDiveFeedbackPage() {
       timestamp: Date.now(),
     };
 
-    const nextMessages = [...messages, userMessage];
+    const assistantTs = Date.now() + 1;
+    const nextMessages = [
+      ...messages,
+      userMessage,
+      { role: "assistant" as const, content: "", timestamp: assistantTs },
+    ];
     setMessages(nextMessages);
     setInput("");
     setIsSending(true);
@@ -94,33 +99,70 @@ export default function DeepDiveFeedbackPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           context,
-          messages: nextMessages.map((m) => ({
+          stream: true,
+          messages: [...messages, userMessage].map((m) => ({
             role: m.role,
             content: m.content,
           })),
         }),
       });
 
-      const data = await response.json();
-      const aiText =
-        typeof data?.response === "string" && data.response.trim()
-          ? data.response.trim()
-          : "I can help break this down. Ask me about discovery, objections, or closing and I will give line-by-line guidance.";
+      if (!response.ok) {
+        throw new Error(`deep_dive_status_${response.status}`);
+      }
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: aiText, timestamp: Date.now() },
-      ]);
+      if (!response.body) {
+        const data = await response.json();
+        const aiText =
+          typeof data?.response === "string" && data.response.trim()
+            ? data.response.trim()
+            : "I can help break this down. Ask me about discovery, objections, or closing and I will give line-by-line guidance.";
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.timestamp === assistantTs ? { ...m, content: aiText } : m,
+          ),
+        );
+      } else {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let combined = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          combined += decoder.decode(value, { stream: true });
+          const snapshot = combined;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.timestamp === assistantTs ? { ...m, content: snapshot } : m,
+            ),
+          );
+        }
+
+        const finalText = combined.trim();
+        if (!finalText) {
+          const fallbackText =
+            "I can help break this down. Ask me about discovery, objections, or closing and I will give line-by-line guidance.";
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.timestamp === assistantTs ? { ...m, content: fallbackText } : m,
+            ),
+          );
+        }
+      }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "I could not reach AI coaching right now. Try again in a moment and I will keep helping with your call breakdown.",
-          timestamp: Date.now(),
-        },
-      ]);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.timestamp === assistantTs
+            ? {
+                ...m,
+                content:
+                  "I could not reach AI coaching right now. Try again in a moment and I will keep helping with your call breakdown.",
+              }
+            : m,
+        ),
+      );
     } finally {
       setIsSending(false);
     }
@@ -183,8 +225,12 @@ export default function DeepDiveFeedbackPage() {
         </div>
 
         <section className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div ref={messageListRef} className="h-[52vh] overflow-y-auto p-4 space-y-3">
+          <div
+            ref={messageListRef}
+            className="h-[52vh] overflow-y-auto p-4 space-y-3"
+          >
             {messages.map((m, i) => (
+              m.role === "assistant" && !m.content.trim() ? null : (
               <div
                 key={`${m.timestamp}-${i}`}
                 className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
@@ -202,28 +248,42 @@ export default function DeepDiveFeedbackPage() {
                         remarkPlugins={[remarkGfm]}
                         components={{
                           h1: ({ children }) => (
-                            <h1 className="text-base font-bold mt-2 mb-2">{children}</h1>
+                            <h1 className="text-base font-bold mt-2 mb-2">
+                              {children}
+                            </h1>
                           ),
                           h2: ({ children }) => (
-                            <h2 className="text-sm font-bold mt-2 mb-2">{children}</h2>
+                            <h2 className="text-sm font-bold mt-2 mb-2">
+                              {children}
+                            </h2>
                           ),
                           h3: ({ children }) => (
-                            <h3 className="text-sm font-semibold mt-2 mb-1">{children}</h3>
+                            <h3 className="text-sm font-semibold mt-2 mb-1">
+                              {children}
+                            </h3>
                           ),
                           p: ({ children }) => (
                             <p className="my-2 leading-relaxed">{children}</p>
                           ),
                           ul: ({ children }) => (
-                            <ul className="list-disc pl-5 my-2 space-y-1">{children}</ul>
+                            <ul className="list-disc pl-5 my-2 space-y-1">
+                              {children}
+                            </ul>
                           ),
                           ol: ({ children }) => (
-                            <ol className="list-decimal pl-5 my-2 space-y-1">{children}</ol>
+                            <ol className="list-decimal pl-5 my-2 space-y-1">
+                              {children}
+                            </ol>
                           ),
                           li: ({ children }) => <li>{children}</li>,
                           strong: ({ children }) => (
-                            <strong className="font-extrabold text-foreground">{children}</strong>
+                            <strong className="font-extrabold text-foreground">
+                              {children}
+                            </strong>
                           ),
-                          em: ({ children }) => <em className="italic">{children}</em>,
+                          em: ({ children }) => (
+                            <em className="italic">{children}</em>
+                          ),
                           blockquote: ({ children }) => (
                             <blockquote className="border-l-2 border-border pl-3 my-2 text-muted">
                               {children}
@@ -259,6 +319,7 @@ export default function DeepDiveFeedbackPage() {
                   )}
                 </div>
               </div>
+              )
             ))}
             {isSending && (
               <div className="text-xs text-muted">AI coach is thinking...</div>

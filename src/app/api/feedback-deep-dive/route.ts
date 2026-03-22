@@ -18,17 +18,18 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const messages = (body?.messages ?? []) as DeepDiveMessage[];
   const context = (body?.context ?? {}) as DeepDiveContext;
+  const wantsStream = Boolean(body?.stream);
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   const configuredModel =
     process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 
   if (!apiKey) {
-    return NextResponse.json({
-      response:
-        "AI deep dive is unavailable because GEMINI_API_KEY is missing. Add your key in environment settings and retry.",
-      meta: { source: "fallback", reason: "missing_gemini_api_key" },
-    });
+    return responseForMode(
+      wantsStream,
+      "AI deep dive is unavailable because GEMINI_API_KEY is missing. Add your key in environment settings and retry.",
+      { source: "fallback", reason: "missing_gemini_api_key" },
+    );
   }
 
   const modelMessages = messages
@@ -94,34 +95,60 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      return NextResponse.json({
-        response:
-          combinedText ||
+      return responseForMode(
+        wantsStream,
+        combinedText ||
           "Give me one specific part of your call you want to improve and I will coach it step-by-step.",
-        meta: {
+        {
           source: "gemini",
           model,
         },
-      });
+      );
     }
 
-    return NextResponse.json({
-      response: fallbackCoach(messages),
-      meta: {
-        source: "fallback",
-        reason: "gemini_request_failed",
-        detail: errors.join(" | ") || "unknown_error",
-      },
+    return responseForMode(wantsStream, fallbackCoach(messages), {
+      source: "fallback",
+      reason: "gemini_request_failed",
+      detail: errors.join(" | ") || "unknown_error",
     });
   } catch {
-    return NextResponse.json({
-      response: fallbackCoach(messages),
-      meta: {
-        source: "fallback",
-        reason: "deep_dive_route_exception",
-      },
+    return responseForMode(wantsStream, fallbackCoach(messages), {
+      source: "fallback",
+      reason: "deep_dive_route_exception",
     });
   }
+}
+
+function responseForMode(
+  wantsStream: boolean,
+  text: string,
+  meta: Record<string, unknown>,
+) {
+  if (!wantsStream) {
+    return NextResponse.json({ response: text, meta });
+  }
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      // Split into small chunks for a typing-like UX without websockets.
+      const chunks = text.match(/.{1,16}(\s|$)/g) ?? [text];
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(chunk));
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Content-Type-Options": "nosniff",
+      "X-DeepDive-Meta": encodeURIComponent(JSON.stringify(meta)),
+    },
+  });
 }
 
 async function generateCoachingText({
@@ -159,7 +186,10 @@ async function generateCoachingText({
 
   if (!response.ok) {
     const error = await response.text();
-    return { ok: false, error: `model=${model} status=${response.status} ${error}` };
+    return {
+      ok: false,
+      error: `model=${model} status=${response.status} ${error}`,
+    };
   }
 
   const data = await response.json();
