@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import type { Persona } from "@/lib/personas";
 import type { TrainingMode } from "@/lib/modes";
 import { CONSULTATIVE_CALL_PHASES } from "@/lib/sales-call-framework";
 
 const LC_ORANGE = "#ffa116";
+
+/** Keeps long persona briefs skimmable in the Description tab. */
+function firstSentences(text: string, max: number): string {
+  const parts = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return parts.slice(0, max).join(" ").trim() || text;
+}
 
 type TabId = "description" | "editorial" | "submissions";
 
@@ -39,14 +45,6 @@ function difficultyMeta(
         className: "bg-zinc-500/20 text-zinc-200 ring-1 ring-zinc-400/30",
       };
   }
-}
-
-function codeInline(children: ReactNode) {
-  return (
-    <code className="rounded bg-sky-950/40 px-1.5 py-0.5 font-mono text-[12px] text-sky-100 ring-1 ring-sky-400/25">
-      {children}
-    </code>
-  );
 }
 
 export default function CallProblemPanel({
@@ -129,70 +127,29 @@ export default function CallProblemPanel({
               vs {persona.firstName}
             </span>
           </div>
-          <p className="mt-3 font-mono text-xs text-sky-700/80 dark:text-zinc-500">
+          <p className="mt-3 text-sm text-sky-800 dark:text-zinc-400">
             Prospect: {persona.displayName}
           </p>
         </div>
 
         {tab === "description" && (
-          <div className="space-y-5 pt-5">
-            <div className="rounded-lg border border-sky-400/35 bg-sky-500/10 p-3 dark:bg-sky-950/30">
-              <p className="text-sm font-semibold text-sky-900 dark:text-sky-200">
-                Where do objections happen?
-              </p>
-              <p className="mt-1.5 text-xs leading-relaxed text-sky-900/90 dark:text-zinc-400">
-                In the <strong className="text-sky-950 dark:text-zinc-200">live conversation</strong>
-                : the AI prospect says them out loud (and they show in your transcript). Use{" "}
-                <strong className="text-sky-950 dark:text-zinc-200">Constraints → Watch for</strong>{" "}
-                to preview likely phrases. Your{" "}
-                <strong className="text-sky-950 dark:text-zinc-200">training mode</strong> (tab
-                Objectives) tells the AI how aggressively to object.
-              </p>
-            </div>
-            <div>
-              <p className="text-[15px] leading-relaxed text-sky-950/90 dark:text-zinc-300">
-                {persona.backgroundStory}
-              </p>
-              <p className="mt-3 text-sm text-sky-800/85 dark:text-zinc-400">
-                They want to {codeInline(persona.nicheGoal)} — your job is to run a realistic
-                discovery → offer arc while they push back like a real lead.
-              </p>
-            </div>
+          <div className="space-y-4 pt-5">
+            <p className="text-sm leading-snug text-sky-800 dark:text-zinc-400">
+              Pushback happens in the live call. Likely lines:{" "}
+              <span className="text-sky-950 dark:text-zinc-200">Constraints</span> · tone:{" "}
+              <span className="text-sky-950 dark:text-zinc-200">Objectives</span>.
+            </p>
 
-            <div>
-              <p className="mb-2 font-semibold text-sky-950 dark:text-zinc-200">Example 1</p>
-              <div className="space-y-2 rounded-lg border border-sky-200/70 bg-white/70 p-3 text-sm dark:border-white/[0.08] dark:bg-black/25">
-                <p className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
-                  <span className="font-bold text-sky-900 dark:text-zinc-200">Input: </span>
-                  <span className="font-mono text-xs text-sky-800 dark:text-zinc-400">
-                    persona=
-                  </span>
-                  {codeInline(persona.id)}
-                  <span className="font-mono text-xs text-sky-800 dark:text-zinc-400">, mode=</span>
-                  {codeInline(mode.id)}
-                </p>
-                <p>
-                  <span className="font-bold text-sky-900 dark:text-zinc-200">Output: </span>
-                  <span className="text-sky-800 dark:text-zinc-400">
-                    A coherent call where you surface pain, handle at least one objection, and move
-                    toward a clear next step.
-                  </span>
-                </p>
-                <p>
-                  <span className="font-bold text-sky-900 dark:text-zinc-200">Explanation: </span>
-                  <span className="text-sky-800 dark:text-zinc-400">
-                    {persona.personalityType}. Watch budget sensitivity: {codeInline(persona.budgetSensitivity)}.
-                  </span>
-                </p>
-              </div>
-            </div>
+            <p className="text-sm leading-relaxed text-sky-950 dark:text-zinc-300">
+              <span className="font-medium text-sky-950 dark:text-zinc-100">
+                {persona.archetypeLabel}.
+              </span>{" "}
+              {firstSentences(persona.backgroundStory, 2)} Trying to {persona.nicheGoal}.
+            </p>
 
-            <div>
-              <p className="mb-2 font-semibold text-sky-950 dark:text-zinc-200">Example 2 — opening</p>
-              <p className="rounded-lg border border-sky-200/60 bg-sky-50/80 p-3 font-mono text-xs leading-relaxed text-sky-900 dark:border-white/[0.08] dark:bg-sky-950/30 dark:text-zinc-300">
-                &quot;{persona.initialGreeting}&quot;
-              </p>
-            </div>
+            <p className="border-l-2 border-sky-400/40 pl-3 text-sm leading-snug italic text-sky-800 dark:border-sky-500/35 dark:text-zinc-400">
+              &ldquo;{persona.initialGreeting}&rdquo;
+            </p>
           </div>
         )}
 

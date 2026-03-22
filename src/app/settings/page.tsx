@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import DashboardNav from "@/components/DashboardNav";
 import { saveProgress, defaultProgress } from "@/lib/gamification";
@@ -54,7 +55,21 @@ export default function SettingsPage() {
         </div>
 
         <section className="card-premium p-6 pt-7">
-          <h2 className="font-display text-base font-semibold">Coaching profile JSON</h2>
+          <h2 className="font-display text-base font-semibold">Coaching profile</h2>
+          <p className="mt-2 text-sm text-muted">
+            Change niche, objections, tone, and more in the same scrollable form as signup. Saved
+            answers load automatically.
+          </p>
+          <Link
+            href="/onboarding"
+            className="btn-primary-glow mt-4 inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Edit coaching profile
+          </Link>
+
+          <h3 className="font-display mt-8 text-sm font-semibold text-zinc-300">
+            Advanced: raw JSON
+          </h3>
           <p className="mt-2 text-sm text-muted">
             Keys used by the AI: coachType, offerName, offerPrice, weakObjections, niche,
             closeRate, practiceTone.

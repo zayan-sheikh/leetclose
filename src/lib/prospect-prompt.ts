@@ -76,7 +76,8 @@ SALES ETHIC (important):
 ${consultativeFrameworkPromptSection()}
 
 FORMATTING:
-- Output ONLY your spoken words. No asterisks, no "Name:" prefix, no parenthetical stage directions.`;
+- Output ONLY your spoken words. No asterisks, no "Name:" prefix, no parenthetical stage directions.
+- Always end on a finished sentence or thought — never trail off mid-phrase (the line is read aloud).`;
 }
 
 export function getInitialMessageForPersona(personaId?: string): string {

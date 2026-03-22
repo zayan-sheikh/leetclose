@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import DashboardNav from "@/components/DashboardNav";
 import { TRAINING_MODES } from "@/lib/modes";
@@ -78,6 +79,16 @@ export default function DashboardPage() {
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-sky-300/85">
                 Run reps, climb ranks, unlock harder prospects. One focused session beats ten vague
                 roleplays.
+              </p>
+              <p className="mt-3 text-sm">
+                <Link
+                  href="/onboarding"
+                  className="font-medium text-sky-300 underline decoration-sky-400/40 underline-offset-2 transition-colors hover:text-sky-200 hover:decoration-sky-300/60"
+                >
+                  Update coaching profile
+                </Link>
+                <span className="text-sky-400/60"> · </span>
+                <span className="text-sky-300/70">niche, objections, tone</span>
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

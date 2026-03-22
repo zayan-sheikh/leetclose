@@ -22,6 +22,14 @@ function isMediaPipeTfNoise(args: unknown[]): boolean {
   );
 }
 
+/** LiveKit (HeyGen Live Avatar) sometimes logs benign DataChannel noise as console.error. */
+function isLiveKitDataChannelNoise(args: unknown[]): boolean {
+  const text = args
+    .map((a) => (typeof a === "string" ? a : a != null ? String(a) : ""))
+    .join(" ");
+  return /Unknown DataChannel error on (lossy|reliable)/i.test(text);
+}
+
 /** Draw MediaPipe face landmarks (normalized 0–1 → video pixels). Same mirror as video via CSS. */
 function drawFaceLandmarks(
   canvas: HTMLCanvasElement | null,
@@ -222,7 +230,7 @@ export default function UserCallCamera({
     };
 
     const filterTfLiteError = (...args: unknown[]) => {
-      if (isMediaPipeTfNoise(args)) return;
+      if (isMediaPipeTfNoise(args) || isLiveKitDataChannelNoise(args)) return;
       origConsoleError(...args);
     };
 

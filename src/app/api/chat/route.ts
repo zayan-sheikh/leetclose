@@ -68,7 +68,8 @@ export async function POST(req: NextRequest) {
           },
           contents: geminiContents,
           generationConfig: {
-            maxOutputTokens: 300,
+            // 300 was cutting prospect lines mid-sentence; dialogue needs headroom.
+            maxOutputTokens: 900,
             temperature: 0.8,
           },
         }),

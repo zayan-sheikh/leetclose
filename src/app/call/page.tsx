@@ -29,6 +29,15 @@ const UserCallCamera = dynamic(() => import("@/components/UserCallCamera"), {
 
 type CallState = "waiting" | "active" | "ended";
 
+/** After this much quiet time with interim text, we treat your turn as done (send + auto-mute). */
+const VOICE_END_SILENCE_MS = 1000;
+
+/**
+ * If HeyGen never resolves (SDK / room bug), we must still clear `isAiTalking` or the text field
+ * stays disabled forever.
+ */
+const HEYGEN_SPEAK_GUARD_MS = 95_000;
+
 export default function CallPage() {
   const [callState, setCallState] = useState<CallState>("waiting");
   const [isMuted, setIsMuted] = useState(false);
@@ -59,6 +68,9 @@ export default function CallPage() {
   const personaIdRef = useRef(personaId);
   const modeIdRef = useRef(modeId);
   const isMutedRef = useRef(isMuted);
+  const currentTranscriptRef = useRef("");
+  /** Breaks circular deps: `sendToAI` must resume the mic after the prospect speaks. */
+  const startListeningRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     personaIdRef.current = personaId;
@@ -76,6 +88,13 @@ export default function CallPage() {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  const clearSilenceFlushTimer = useCallback(() => {
+    if (silenceFlushTimerRef.current) {
+      clearTimeout(silenceFlushTimerRef.current);
+      silenceFlushTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const valid = new Set(PERSONAS.map((p) => p.id));
@@ -102,22 +121,32 @@ export default function CallPage() {
 
   const speak = useCallback(
     async (text: string) => {
-      await waitForAvatarHandle();
-      const heygen = avatarRef.current;
-      if (heygen) {
-        try {
-          setIsAiTalking(true);
-          await heygen.speak(text);
-          setIsAiTalking(false);
-          return;
-        } catch (e) {
-          console.warn("[call] HeyGen speak failed, using browser TTS", e);
-          setIsAiTalking(false);
+      setIsAiTalking(true);
+      try {
+        await waitForAvatarHandle();
+        const heygen = avatarRef.current;
+        if (heygen) {
+          try {
+            await Promise.race([
+              heygen.speak(text),
+              new Promise<never>((_, reject) => {
+                setTimeout(
+                  () => reject(new Error("HeyGen speak timed out")),
+                  HEYGEN_SPEAK_GUARD_MS,
+                );
+              }),
+            ]);
+            return;
+          } catch (e) {
+            console.warn("[call] HeyGen speak failed or timed out, using browser TTS", e);
+          }
         }
-      }
 
-      await new Promise<void>((resolve) => {
-        if ("speechSynthesis" in window) {
+        await new Promise<void>((resolve) => {
+          if (!("speechSynthesis" in window)) {
+            resolve();
+            return;
+          }
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
           const voices = window.speechSynthesis.getVoices();
@@ -134,20 +163,23 @@ export default function CallPage() {
           if (femaleVoice) utterance.voice = femaleVoice;
           utterance.rate = 0.95;
           utterance.pitch = 1.05;
-          utterance.onstart = () => setIsAiTalking(true);
+          const ttsTimeout = window.setTimeout(() => {
+            console.warn("[call] Browser TTS safety timeout");
+            resolve();
+          }, 120_000);
           utterance.onend = () => {
-            setIsAiTalking(false);
+            window.clearTimeout(ttsTimeout);
             resolve();
           };
           utterance.onerror = () => {
-            setIsAiTalking(false);
+            window.clearTimeout(ttsTimeout);
             resolve();
           };
           window.speechSynthesis.speak(utterance);
-        } else {
-          resolve();
-        }
-      });
+        });
+      } finally {
+        setIsAiTalking(false);
+      }
     },
     [waitForAvatarHandle],
   );
@@ -165,6 +197,9 @@ export default function CallPage() {
       };
       setMessages((prev) => [...prev, userMsg]);
 
+      const chatAbort = new AbortController();
+      const chatAbortTimer = window.setTimeout(() => chatAbort.abort(), 75_000);
+
       try {
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -175,24 +210,75 @@ export default function CallPage() {
             personaId: personaIdRef.current,
             modeId: modeIdRef.current,
           }),
+          signal: chatAbort.signal,
         });
 
         const data = await response.json();
-        const aiText = data.response;
+        const aiText =
+          typeof data?.response === "string" ? data.response.trim() : "";
 
-        chatHistoryRef.current.push({ role: "assistant", content: aiText });
-        const aiMsg: TranscriptMessage = {
-          role: "prospect",
-          content: aiText,
-          timestamp: Date.now(),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-        await speak(aiText);
+        if (aiText) {
+          chatHistoryRef.current.push({ role: "assistant", content: aiText });
+          const aiMsg: TranscriptMessage = {
+            role: "prospect",
+            content: aiText,
+            timestamp: Date.now(),
+          };
+          setMessages((prev) => [...prev, aiMsg]);
+          await speak(aiText);
+        }
       } catch (error) {
         console.error("Failed to get AI response:", error);
+      } finally {
+        window.clearTimeout(chatAbortTimer);
+        if (callStateRef.current !== "active") return;
+        isMutedRef.current = false;
+        setIsMuted(false);
+        shouldListenRef.current = true;
+        try {
+          startListeningRef.current?.();
+        } catch (e) {
+          console.warn("[call] Could not resume mic after prospect spoke", e);
+        }
       }
     },
     [getProfile, speak],
+  );
+
+  /**
+   * Commit voice draft: mute + stop STT while the request runs; `sendToAI` auto-unmutes and
+   * restarts listening after the prospect finishes speaking.
+   */
+  const finalizeVoiceTurn = useCallback(
+    async (text: string) => {
+      const cleaned = text.trim();
+      if (!cleaned || awaitingAiRef.current) return;
+
+      awaitingAiRef.current = true;
+      shouldListenRef.current = false;
+      clearSilenceFlushTimer();
+      setCurrentTranscript("");
+      currentTranscriptRef.current = "";
+      setIsListening(false);
+
+      isMutedRef.current = true;
+      setIsMuted(true);
+
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
+
+      try {
+        await sendToAI(cleaned);
+      } finally {
+        awaitingAiRef.current = false;
+        shouldListenRef.current = false;
+      }
+    },
+    [sendToAI, clearSilenceFlushTimer],
   );
 
   const startListening = useCallback(() => {
@@ -205,7 +291,7 @@ export default function CallPage() {
       return;
     }
 
-    if (recognitionRef.current && (isListening || shouldListenRef.current)) {
+    if (recognitionRef.current && isListening) {
       return;
     }
 
@@ -221,49 +307,6 @@ export default function CallPage() {
     let finalTranscript = "";
     let interimTranscript = "";
 
-    const clearSilenceFlushTimer = () => {
-      if (silenceFlushTimerRef.current) {
-        clearTimeout(silenceFlushTimerRef.current);
-        silenceFlushTimerRef.current = null;
-      }
-    };
-
-    const submitTranscript = async (text: string) => {
-      const cleaned = text.trim();
-      if (!cleaned || awaitingAiRef.current) return;
-
-      awaitingAiRef.current = true;
-      shouldListenRef.current = false;
-      clearSilenceFlushTimer();
-      setCurrentTranscript("");
-      setIsListening(false);
-
-      try {
-        recognition.stop();
-      } catch {
-        /* ignore */
-      }
-
-      finalTranscript = "";
-      interimTranscript = "";
-
-      try {
-        await sendToAI(cleaned);
-      } finally {
-        awaitingAiRef.current = false;
-        shouldListenRef.current =
-          callStateRef.current === "active" && !isMutedRef.current;
-        if (shouldListenRef.current) {
-          try {
-            recognition.start();
-            setIsListening(true);
-          } catch {
-            /* ignore */
-          }
-        }
-      }
-    };
-
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -277,18 +320,21 @@ export default function CallPage() {
 
       interimTranscript = interim.trim();
       setCurrentTranscript(interimTranscript);
+      currentTranscriptRef.current = interimTranscript;
 
       const textToSend = finalTranscript.trim();
       if (textToSend) {
-        void submitTranscript(textToSend);
+        void finalizeVoiceTurn(textToSend);
+        finalTranscript = "";
+        interimTranscript = "";
         return;
       }
 
       if (interimTranscript) {
         clearSilenceFlushTimer();
         silenceFlushTimerRef.current = setTimeout(() => {
-          void submitTranscript(interimTranscript);
-        }, 1600);
+          void finalizeVoiceTurn(interimTranscript);
+        }, VOICE_END_SILENCE_MS);
       }
     };
 
@@ -354,7 +400,9 @@ export default function CallPage() {
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-  }, [isListening, sendToAI]);
+  }, [isListening, finalizeVoiceTurn, clearSilenceFlushTimer]);
+
+  startListeningRef.current = startListening;
 
   const sendTypedReply = useCallback(() => {
     const t = typedLine.trim();
@@ -362,6 +410,7 @@ export default function CallPage() {
     setTypedLine("");
     setSpeechHint(null);
     setCurrentTranscript("");
+    currentTranscriptRef.current = "";
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -371,12 +420,8 @@ export default function CallPage() {
       recognitionRef.current = null;
     }
     setIsListening(false);
-    sendToAI(t).then(() => {
-      if (!isMutedRef.current) {
-        startListening();
-      }
-    });
-  }, [typedLine, isAiTalking, sendToAI, startListening]);
+    void sendToAI(t);
+  }, [typedLine, isAiTalking, sendToAI]);
 
   const startCall = useCallback(async () => {
     const p = loadProgress();
@@ -397,6 +442,8 @@ export default function CallPage() {
     setStripeSent(false);
     setSpeechHint(null);
     setTypedLine("");
+    setCurrentTranscript("");
+    currentTranscriptRef.current = "";
     chatHistoryRef.current = [];
 
     if ("speechSynthesis" in window) {
@@ -442,10 +489,9 @@ export default function CallPage() {
     setIsAiTalking(false);
     shouldListenRef.current = false;
     awaitingAiRef.current = false;
-    if (silenceFlushTimerRef.current) {
-      clearTimeout(silenceFlushTimerRef.current);
-      silenceFlushTimerRef.current = null;
-    }
+    clearSilenceFlushTimer();
+    setCurrentTranscript("");
+    currentTranscriptRef.current = "";
 
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -468,7 +514,7 @@ export default function CallPage() {
     };
     localStorage.setItem("closearena_last_call", JSON.stringify(callData));
     window.location.href = "/feedback";
-  }, [callStartTime, personaId, modeId, stripeSent]);
+  }, [callStartTime, personaId, modeId, stripeSent, clearSilenceFlushTimer]);
 
   const sendStripeLink = useCallback(async () => {
     if (stripeSent || sendingStripe) return;
@@ -488,6 +534,7 @@ export default function CallPage() {
       } catch {
         /* ignore */
       }
+      recognitionRef.current = null;
       setIsListening(false);
     }
 
@@ -515,13 +562,14 @@ export default function CallPage() {
     } finally {
       setSendingStripe(false);
       setTimeout(() => {
-        if (!isMutedRef.current && recognitionRef.current) {
-          try {
-            recognitionRef.current.start();
-            setIsListening(true);
-          } catch {
-            /* ignore */
-          }
+        if (callStateRef.current !== "active") return;
+        isMutedRef.current = false;
+        setIsMuted(false);
+        shouldListenRef.current = true;
+        try {
+          startListeningRef.current?.();
+        } catch {
+          /* ignore */
         }
       }, 200);
     }
@@ -530,20 +578,33 @@ export default function CallPage() {
   const toggleMute = useCallback(() => {
     if (isMuted) {
       shouldListenRef.current = true;
+      isMutedRef.current = false;
+      setIsMuted(false);
       startListening();
-    } else {
-      shouldListenRef.current = false;
-      if (silenceFlushTimerRef.current) {
-        clearTimeout(silenceFlushTimerRef.current);
-        silenceFlushTimerRef.current = null;
-      }
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsListening(false);
+      return;
     }
-    setIsMuted(!isMuted);
-  }, [isMuted, startListening]);
+
+    shouldListenRef.current = false;
+    clearSilenceFlushTimer();
+
+    const draft = currentTranscriptRef.current.trim();
+    if (draft && callStateRef.current === "active" && !awaitingAiRef.current) {
+      void finalizeVoiceTurn(draft);
+      return;
+    }
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+    isMutedRef.current = true;
+    setIsMuted(true);
+  }, [isMuted, startListening, clearSilenceFlushTimer, finalizeVoiceTurn]);
 
   const activePersona = getPersonaById(personaId);
   const activeMode = getModeById(modeId);
@@ -850,6 +911,10 @@ export default function CallPage() {
                   </button>
                 </div>
 
+                <p className="mb-2 text-center text-[10px] leading-snug text-zinc-500">
+                  Voice: pause ~1s after you finish (or tap mute) to send. Mic turns back on after the
+                  prospect speaks — tap mute anytime to stay silent.
+                </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                   <button
                     type="button"
@@ -859,7 +924,11 @@ export default function CallPage() {
                         ? "bg-danger text-white shadow-[0_0_28px_-6px_var(--glow-danger)] ring-2 ring-danger/35"
                         : "bg-[#1c1c21] text-white ring-1 ring-white/12 hover:bg-[#25252c] hover:ring-sky-400/30"
                     }`}
-                    title={isMuted ? "Unmute microphone" : "Mute microphone"}
+                    title={
+                      isMuted
+                        ? "Unmute to speak (also turns on automatically after the prospect talks)"
+                        : "Mute — or pause ~1s after speaking to send; mic mutes until their reply finishes"
+                    }
                   >
                     {isMuted ? (
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
