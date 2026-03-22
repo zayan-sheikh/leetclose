@@ -23,9 +23,9 @@ export default function DashboardNav() {
           href="/dashboard"
           className="font-display flex items-center gap-2.5 font-bold tracking-tight"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-sm font-bold text-foreground">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-none text-sm font-bold text-foreground">
             <Image
-              src="/icon.svg"
+              src="/iconwhite.svg"
               alt="LeetClose"
               width={36}
               height={36}
