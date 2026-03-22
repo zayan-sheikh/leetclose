@@ -1,8 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   analyzeCallFull,
   type CallData,
@@ -26,6 +28,7 @@ export default function DeepDiveFeedbackPage() {
   const [messages, setMessages] = useState<DeepDiveMessage[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const messageListRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem("closearena_last_call");
@@ -60,6 +63,15 @@ export default function DeepDiveFeedbackPage() {
     };
   }, [callData, feedback, scores, prospectLabel]);
 
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => {
+      const el = messageListRef.current;
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [messages, isSending]);
+
   async function onSend(e: FormEvent) {
     e.preventDefault();
     const text = input.trim();
@@ -82,7 +94,10 @@ export default function DeepDiveFeedbackPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           context,
-          messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+          messages: nextMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
         }),
       });
 
@@ -122,7 +137,10 @@ export default function DeepDiveFeedbackPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border px-4 py-3 flex justify-between items-center">
-        <Link href="/feedback" className="text-sm text-muted hover:text-foreground">
+        <Link
+          href="/feedback"
+          className="text-sm text-muted hover:text-foreground"
+        >
           ← Back to Feedback
         </Link>
         <span className="text-xs text-muted">AI Deep Dive</span>
@@ -138,7 +156,9 @@ export default function DeepDiveFeedbackPage() {
 
         <div className="grid md:grid-cols-2 gap-4 mb-4">
           <section className="bg-card border border-border rounded-2xl p-5">
-            <h2 className="font-semibold text-success mb-2">What you did well</h2>
+            <h2 className="font-semibold text-success mb-2">
+              What you did well
+            </h2>
             <ul className="space-y-1.5 text-sm text-foreground/80">
               {feedback.didWell.map((item, i) => (
                 <li key={i}>• {item}</li>
@@ -156,11 +176,14 @@ export default function DeepDiveFeedbackPage() {
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-4 mb-4 text-sm text-muted">
-          Score {scores.overall} overall · Close probability {scores.closeProbability}% · {callData.messages.filter((m) => m.role === "user").length} coach turns
+          Score {scores.overall} overall · Close probability{" "}
+          {scores.closeProbability}% ·{" "}
+          {callData.messages.filter((m) => m.role === "user").length} coach
+          turns
         </div>
 
         <section className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="h-[52vh] overflow-y-auto p-4 space-y-3">
+          <div ref={messageListRef} className="h-[52vh] overflow-y-auto p-4 space-y-3">
             {messages.map((m, i) => (
               <div
                 key={`${m.timestamp}-${i}`}
@@ -173,7 +196,67 @@ export default function DeepDiveFeedbackPage() {
                       : "bg-background border border-border text-foreground"
                   }`}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? (
+                    <div className="max-w-none text-foreground">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({ children }) => (
+                            <h1 className="text-base font-bold mt-2 mb-2">{children}</h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-sm font-bold mt-2 mb-2">{children}</h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-sm font-semibold mt-2 mb-1">{children}</h3>
+                          ),
+                          p: ({ children }) => (
+                            <p className="my-2 leading-relaxed">{children}</p>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc pl-5 my-2 space-y-1">{children}</ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal pl-5 my-2 space-y-1">{children}</ol>
+                          ),
+                          li: ({ children }) => <li>{children}</li>,
+                          strong: ({ children }) => (
+                            <strong className="font-extrabold text-foreground">{children}</strong>
+                          ),
+                          em: ({ children }) => <em className="italic">{children}</em>,
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-2 border-border pl-3 my-2 text-muted">
+                              {children}
+                            </blockquote>
+                          ),
+                          code: ({ children }) => (
+                            <code className="px-1 py-0.5 rounded bg-black/10 text-[13px] font-mono">
+                              {children}
+                            </code>
+                          ),
+                          pre: ({ children }) => (
+                            <pre className="my-2 p-3 rounded-lg bg-black/70 text-white overflow-x-auto text-[13px]">
+                              {children}
+                            </pre>
+                          ),
+                          a: ({ href, children }) => (
+                            <a
+                              href={href}
+                              className="underline text-accent"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {children}
+                            </a>
+                          ),
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    m.content
+                  )}
                 </div>
               </div>
             ))}
@@ -182,7 +265,10 @@ export default function DeepDiveFeedbackPage() {
             )}
           </div>
 
-          <form onSubmit={onSend} className="border-t border-border p-3 flex gap-2">
+          <form
+            onSubmit={onSend}
+            className="border-t border-border p-3 flex gap-2"
+          >
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -203,7 +289,10 @@ export default function DeepDiveFeedbackPage() {
   );
 }
 
-function buildIntroMessage(feedback: ExtendedFeedback, scores: FullScores): string {
+function buildIntroMessage(
+  feedback: ExtendedFeedback,
+  scores: FullScores,
+): string {
   const didWellLines = feedback.didWell.length
     ? feedback.didWell.map((x) => `- ${x}`).join("\n")
     : "- No strong positives were detected yet. We can change that quickly.";

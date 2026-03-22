@@ -12,7 +12,7 @@ export function buildProspectSystemPrompt(
     practiceTone?: string;
   },
   personaId?: string,
-  modeId?: TrainingModeId | string
+  modeId?: TrainingModeId | string,
 ) {
   const persona = getPersonaById(personaId);
   const p = persona.promptProfile;

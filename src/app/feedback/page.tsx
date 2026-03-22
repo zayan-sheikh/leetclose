@@ -91,7 +91,10 @@ export default function FeedbackPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border px-4 py-3 flex justify-between items-center">
-        <Link href="/dashboard" className="text-sm text-muted hover:text-foreground">
+        <Link
+          href="/dashboard"
+          className="text-sm text-muted hover:text-foreground"
+        >
           ← Dashboard
         </Link>
         <span className="text-xs text-muted">Results</span>
@@ -101,8 +104,9 @@ export default function FeedbackPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Call results</h1>
           <p className="text-muted">
-            {minutes}m {seconds}s · {callData.messages.filter((m) => m.role === "user").length}{" "}
-            coach turns · vs {prospectLabel}
+            {minutes}m {seconds}s ·{" "}
+            {callData.messages.filter((m) => m.role === "user").length} coach
+            turns · vs {prospectLabel}
           </p>
         </div>
 
@@ -122,18 +126,26 @@ export default function FeedbackPage() {
           <ScoreBar label="Rapport" score={scores.rapport} />
           <ScoreBar label="Discovery depth" score={scores.discovery} />
           <ScoreBar label="Pain extraction" score={scores.painExtraction} />
-          <ScoreBar label="Emotional connection" score={scores.emotionalConnection} />
+          <ScoreBar
+            label="Emotional connection"
+            score={scores.emotionalConnection}
+          />
           <ScoreBar label="Control of the call" score={scores.callControl} />
           <ScoreBar label="Clarity of offer" score={scores.offerClarity} />
           <ScoreBar label="Confidence" score={scores.confidence} />
-          <ScoreBar label="Objection handling" score={scores.objectionHandling} />
+          <ScoreBar
+            label="Objection handling"
+            score={scores.objectionHandling}
+          />
           <ScoreBar label="Closing strength" score={scores.closing} />
           <ScoreBar label="Payment ask timing" score={scores.paymentTiming} />
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <h2 className="font-semibold text-accent mb-2">AI coach summary</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed">{feedback.coachSummary}</p>
+          <p className="text-sm text-foreground/90 leading-relaxed">
+            {feedback.coachSummary}
+          </p>
           <div className="mt-4 p-4 rounded-xl bg-accent/10 border border-accent/20">
             <p className="text-xs font-semibold text-accent uppercase tracking-wide mb-1">
               Suggested retry challenge
@@ -144,7 +156,9 @@ export default function FeedbackPage() {
 
         <div className="grid md:grid-cols-2 gap-4 mb-6">
           <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="font-semibold text-success mb-3">What you did well</h2>
+            <h2 className="font-semibold text-success mb-3">
+              What you did well
+            </h2>
             <ul className="space-y-2 text-sm text-foreground/80">
               {feedback.didWell.map((item, i) => (
                 <li key={i}>• {item}</li>
@@ -173,7 +187,9 @@ export default function FeedbackPage() {
 
         {feedback.momentsAtRisk.length > 0 && (
           <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-            <h2 className="font-semibold mb-3">Moments where you may have lost momentum</h2>
+            <h2 className="font-semibold mb-3">
+              Moments where you may have lost momentum
+            </h2>
             <ul className="space-y-2 text-sm text-foreground/80">
               {feedback.momentsAtRisk.map((item, i) => (
                 <li key={i}>• {item}</li>
@@ -222,7 +238,9 @@ export default function FeedbackPage() {
               <div key={i} className="flex gap-3">
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    msg.role === "user" ? "bg-accent text-white" : "bg-[#2a4a6a] text-white"
+                    msg.role === "user"
+                      ? "bg-accent text-white"
+                      : "bg-[#2a4a6a] text-white"
                   }`}
                 >
                   {msg.role === "user" ? "Y" : prospectLabel.charAt(0)}
@@ -241,8 +259,8 @@ export default function FeedbackPage() {
         <div className="bg-card border border-border rounded-2xl p-6 mb-8">
           <h2 className="font-semibold mb-3">Badges &amp; XP</h2>
           <p className="text-sm text-muted mb-3">
-            +XP applied. Level {progress.level} · {progress.xp.toLocaleString()} XP ·{" "}
-            {progress.streak} day streak
+            +XP applied. Level {progress.level} · {progress.xp.toLocaleString()}{" "}
+            XP · {progress.streak} day streak
           </p>
           <div className="flex flex-wrap gap-2">
             {progress.badges.map((id) => {
@@ -258,7 +276,9 @@ export default function FeedbackPage() {
               );
             })}
             {progress.badges.length === 0 && (
-              <span className="text-sm text-muted">Keep practicing to unlock badges.</span>
+              <span className="text-sm text-muted">
+                Keep practicing to unlock badges.
+              </span>
             )}
           </div>
         </div>

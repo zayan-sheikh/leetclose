@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
   const context = (body?.context ?? {}) as DeepDiveContext;
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
-  const configuredModel = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  const configuredModel =
+    process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 
   if (!apiKey) {
     return NextResponse.json({
@@ -53,43 +54,50 @@ export async function POST(req: NextRequest) {
     const errors: string[] = [];
 
     for (const model of modelCandidates) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      const firstPass = await generateCoachingText({
+        apiKey,
         model,
-      )}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }],
-          },
-          contents: modelMessages,
-          generationConfig: {
-            maxOutputTokens: 500,
-            temperature: 0.6,
-          },
-        }),
+        systemPrompt,
+        contents: modelMessages,
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        errors.push(`model=${model} status=${response.status} ${error}`);
+      if (!firstPass.ok) {
+        errors.push(firstPass.error);
         continue;
       }
 
-      const data = await response.json();
-      const text =
-        data?.candidates?.[0]?.content?.parts
-          ?.map((p: { text?: string }) =>
-            typeof p?.text === "string" ? p.text : "",
-          )
-          .join("\n")
-          .trim() ||
-        "Give me one specific part of your call you want to improve and I will coach it step-by-step.";
+      let combinedText = firstPass.text;
+
+      if (firstPass.wasTruncated) {
+        const continueMessages = [
+          ...modelMessages,
+          { role: "model", parts: [{ text: firstPass.text }] },
+          {
+            role: "user",
+            parts: [
+              {
+                text: "Continue exactly where you left off. Do not repeat previous lines. Finish the answer.",
+              },
+            ],
+          },
+        ];
+
+        const secondPass = await generateCoachingText({
+          apiKey,
+          model,
+          systemPrompt,
+          contents: continueMessages,
+        });
+
+        if (secondPass.ok && secondPass.text) {
+          combinedText = `${firstPass.text}\n\n${secondPass.text}`.trim();
+        }
+      }
 
       return NextResponse.json({
-        response: text,
+        response:
+          combinedText ||
+          "Give me one specific part of your call you want to improve and I will coach it step-by-step.",
         meta: {
           source: "gemini",
           model,
@@ -114,6 +122,61 @@ export async function POST(req: NextRequest) {
       },
     });
   }
+}
+
+async function generateCoachingText({
+  apiKey,
+  model,
+  systemPrompt,
+  contents,
+}: {
+  apiKey: string;
+  model: string;
+  systemPrompt: string;
+  contents: Array<{ role: string; parts: Array<{ text: string }> }>;
+}): Promise<
+  | { ok: true; text: string; wasTruncated: boolean }
+  | { ok: false; error: string }
+> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    model,
+  )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: systemPrompt }],
+      },
+      contents,
+      generationConfig: {
+        maxOutputTokens: 1000,
+        temperature: 0.6,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    return { ok: false, error: `model=${model} status=${response.status} ${error}` };
+  }
+
+  const data = await response.json();
+  const candidate = data?.candidates?.[0];
+  const text =
+    candidate?.content?.parts
+      ?.map((p: { text?: string }) =>
+        typeof p?.text === "string" ? p.text : "",
+      )
+      .join("\n")
+      .trim() || "";
+
+  return {
+    ok: true,
+    text,
+    wasTruncated: candidate?.finishReason === "MAX_TOKENS",
+  };
 }
 
 function buildDeepDivePrompt(context: DeepDiveContext): string {

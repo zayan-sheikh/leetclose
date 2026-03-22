@@ -37,7 +37,12 @@ export interface Persona {
   skepticismLevel: "low" | "medium" | "high" | "very-high";
   personalityType: string;
   unlockedByDefault: boolean;
-  objectionDifficulty: "level-1" | "level-2" | "level-3" | "level-4" | "level-5";
+  objectionDifficulty:
+    | "level-1"
+    | "level-2"
+    | "level-3"
+    | "level-4"
+    | "level-5";
   avatarTone: "warm" | "neutral" | "cool" | "deep";
   initialGreeting: string;
   promptProfile: PersonaPromptProfile;
@@ -68,7 +73,11 @@ export const PERSONAS: Persona[] = [
       "What kind of results are normal?",
       "What do you need from me for this to work?",
     ],
-    emotionalTriggers: ["Momentum protection", "Relief from chaos", "Reliable follow-up"],
+    emotionalTriggers: [
+      "Momentum protection",
+      "Relief from chaos",
+      "Reliable follow-up",
+    ],
     budgetSensitivity: "medium",
     urgencyLevel: "high",
     trustLevel: "medium",
@@ -77,7 +86,8 @@ export const PERSONAS: Persona[] = [
     unlockedByDefault: true,
     objectionDifficulty: "level-1",
     avatarTone: "warm",
-    initialGreeting: "Hey, thanks for jumping on. I mainly need help handling the volume right now.",
+    initialGreeting:
+      "Hey, thanks for jumping on. I mainly need help handling the volume right now.",
     promptProfile: {
       personaType: "Open Buyer",
       difficultyLevel: 1,
@@ -102,7 +112,12 @@ export const PERSONAS: Persona[] = [
         "Do not lose opportunities",
         "Want relief from operational chaos",
       ],
-      logicalDrivers: ["Efficiency", "Structure", "Consistency", "Follow-up quality"],
+      logicalDrivers: [
+        "Efficiency",
+        "Structure",
+        "Consistency",
+        "Follow-up quality",
+      ],
       triedBefore: [
         "Handling DMs personally",
         "Manual replies when possible",
@@ -110,7 +125,12 @@ export const PERSONAS: Persona[] = [
         "Patchwork process without core system",
       ],
       likedBefore: ["Personal control", "Visibility into each conversation"],
-      dislikedBefore: ["Exhausting", "Not scalable", "Messy", "Easy to miss leads"],
+      dislikedBefore: [
+        "Exhausting",
+        "Not scalable",
+        "Messy",
+        "Easy to miss leads",
+      ],
       decisionStyle: "Moves quickly once trust and fit are clear",
       hiddenObjection:
         "Wants confidence the system preserves brand voice and does not feel robotic",
@@ -163,7 +183,11 @@ export const PERSONAS: Persona[] = [
       "I am interested but do not want to jump too early.",
       "How would this fit my stage right now?",
     ],
-    emotionalTriggers: ["Confidence in timing", "Smart decisions", "Clean growth path"],
+    emotionalTriggers: [
+      "Confidence in timing",
+      "Smart decisions",
+      "Clean growth path",
+    ],
     budgetSensitivity: "high",
     urgencyLevel: "medium",
     trustLevel: "medium",
@@ -172,7 +196,8 @@ export const PERSONAS: Persona[] = [
     unlockedByDefault: true,
     objectionDifficulty: "level-2",
     avatarTone: "neutral",
-    initialGreeting: "Hey, I am interested in cleaner systems, I just want to make sure timing makes sense.",
+    initialGreeting:
+      "Hey, I am interested in cleaner systems, I just want to make sure timing makes sense.",
     promptProfile: {
       personaType: "Cautious Explorer",
       difficultyLevel: 2,
@@ -198,7 +223,12 @@ export const PERSONAS: Persona[] = [
         "Avoid premature decision",
         "Move intelligently",
       ],
-      logicalDrivers: ["Timing", "Infrastructure", "Leverage", "System quality"],
+      logicalDrivers: [
+        "Timing",
+        "Infrastructure",
+        "Leverage",
+        "System quality",
+      ],
       triedBefore: [
         "Doing everything alone",
         "Learning from content",
@@ -206,7 +236,12 @@ export const PERSONAS: Persona[] = [
         "Improving delivery before heavy scaling",
       ],
       likedBefore: ["Low cost", "Flexibility", "Control", "Fast learning"],
-      dislikedBefore: ["Reactive", "Inconsistent", "Unclear systems", "Inefficient"],
+      dislikedBefore: [
+        "Reactive",
+        "Inconsistent",
+        "Unclear systems",
+        "Inefficient",
+      ],
       decisionStyle: "Thoughtful and cautious",
       hiddenObjection: "Concerned this may be too early for current stage",
       behaviorRules: [
@@ -272,7 +307,8 @@ export const PERSONAS: Persona[] = [
     unlockedByDefault: true,
     objectionDifficulty: "level-3",
     avatarTone: "warm",
-    initialGreeting: "Hey, I know something needs to change, I just feel all over the place with it.",
+    initialGreeting:
+      "Hey, I know something needs to change, I just feel all over the place with it.",
     promptProfile: {
       personaType: "Emotional but Messy Buyer",
       difficultyLevel: 3,
@@ -310,10 +346,20 @@ export const PERSONAS: Persona[] = [
         "Self-guided attempts",
         "Coach or trainer not fully trusted",
       ],
-      likedBefore: ["Initial motivation", "Temporary momentum", "Having a plan"],
-      dislikedBefore: ["Generic advice", "No lasting results", "Confusion", "Low trust"],
+      likedBefore: [
+        "Initial motivation",
+        "Temporary momentum",
+        "Having a plan",
+      ],
+      dislikedBefore: [
+        "Generic advice",
+        "No lasting results",
+        "Confusion",
+        "Low trust",
+      ],
       decisionStyle: "Emotionally influenced; trust is central",
-      hiddenObjection: "Afraid this will start strong and fade like prior attempts",
+      hiddenObjection:
+        "Afraid this will start strong and fade like prior attempts",
       behaviorRules: [
         "Speak emotionally and not always in neat structure",
         "Reward reps who organize the problem clearly",
@@ -370,7 +416,8 @@ export const PERSONAS: Persona[] = [
     unlockedByDefault: false,
     objectionDifficulty: "level-4",
     avatarTone: "cool",
-    initialGreeting: "I am looking for something practical, not hype. Show me how this fits real life.",
+    initialGreeting:
+      "I am looking for something practical, not hype. Show me how this fits real life.",
     promptProfile: {
       personaType: "High-Functioning Skeptic",
       difficultyLevel: 4,
@@ -394,7 +441,12 @@ export const PERSONAS: Persona[] = [
         "Feel competent again",
         "Prove capability to self",
       ],
-      logicalDrivers: ["Practicality", "Specificity", "Progression", "Constraint-fit"],
+      logicalDrivers: [
+        "Practicality",
+        "Specificity",
+        "Progression",
+        "Constraint-fit",
+      ],
       triedBefore: [
         "Unstructured gym attendance",
         "Random routines",
@@ -402,7 +454,11 @@ export const PERSONAS: Persona[] = [
         "Patchwork activity without roadmap",
       ],
       likedBefore: ["Independence", "Flexibility"],
-      dislikedBefore: ["No progression", "No tailored roadmap", "Low sustainability"],
+      dislikedBefore: [
+        "No progression",
+        "No tailored roadmap",
+        "Low sustainability",
+      ],
       decisionStyle: "Logical, thoughtful, reality-based",
       hiddenObjection:
         "Fears coach will underestimate lifestyle complexity and give a generic plan",
@@ -467,7 +523,8 @@ export const PERSONAS: Persona[] = [
     unlockedByDefault: false,
     objectionDifficulty: "level-5",
     avatarTone: "deep",
-    initialGreeting: "I am evaluating whether this creates real leverage or just sounds good.",
+    initialGreeting:
+      "I am evaluating whether this creates real leverage or just sounds good.",
     promptProfile: {
       personaType: "Elite Buyer Test",
       difficultyLevel: 5,
@@ -505,7 +562,11 @@ export const PERSONAS: Persona[] = [
         "Accountability systems",
         "Short-term structures",
       ],
-      likedBefore: ["Short-term clarity", "Initial momentum", "Temporary focus"],
+      likedBefore: [
+        "Short-term clarity",
+        "Initial momentum",
+        "Temporary focus",
+      ],
       dislikedBefore: [
         "Dependence",
         "Shallow personalization",
@@ -547,5 +608,7 @@ export function getPersonaById(id: string | undefined): Persona {
 }
 
 export function getAvailablePersonas(unlockedIds: string[]): Persona[] {
-  return PERSONAS.filter((p) => p.unlockedByDefault || unlockedIds.includes(p.id));
+  return PERSONAS.filter(
+    (p) => p.unlockedByDefault || unlockedIds.includes(p.id),
+  );
 }
