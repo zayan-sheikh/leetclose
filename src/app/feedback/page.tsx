@@ -332,29 +332,6 @@ export default function FeedbackPage() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-2">
-          <div className="card-premium p-6 pt-7">
-            <h2 className="font-display text-base font-semibold text-success/95">
-              What you did well
-            </h2>
-            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
-              {feedback.didWell.map((item, i) => (
-                <li key={i}>• {item}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="card-premium p-6 pt-7">
-            <h2 className="font-display text-base font-semibold text-amber-400/95">
-              What to improve
-            </h2>
-            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
-              {feedback.missed.map((item, i) => (
-                <li key={i}>• {item}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
         <div className="mb-6">
           <button
             type="button"
@@ -507,6 +484,29 @@ export default function FeedbackPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="mb-6 grid gap-4 md:grid-cols-2">
+          <div className="card-premium p-6 pt-7">
+            <h2 className="font-display text-base font-semibold text-success/95">
+              What you did well
+            </h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
+              {feedback.didWell.map((item, i) => (
+                <li key={i}>• {item}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="card-premium p-6 pt-7">
+            <h2 className="font-display text-base font-semibold text-amber-400/95">
+              What to improve
+            </h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-400">
+              {feedback.missed.map((item, i) => (
+                <li key={i}>• {item}</li>
+              ))}
+            </ul>
           </div>
         </div>
 
