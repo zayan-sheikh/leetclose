@@ -212,6 +212,14 @@ body::after {
   background: rgba(255, 255, 255, 0.18);
 }
 
+.feedback-report .card-premium::before {
+  display: none;
+}
+
+.feedback-report .card-premium {
+  box-shadow: none;
+}
+
 .input-premium {
   width: 100%;
   border-radius: 0.75rem;

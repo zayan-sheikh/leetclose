@@ -155,7 +155,7 @@ export default function FeedbackPage() {
         </span>
       </header>
 
-      <div className="relative mx-auto max-w-3xl px-4 py-8">
+      <div className="feedback-report relative mx-auto max-w-3xl px-4 py-8">
         <div className="mb-8 text-center">
           <p className="label-overline">Debrief</p>
           <h1 className="font-display mt-2 text-3xl font-bold tracking-tight">
