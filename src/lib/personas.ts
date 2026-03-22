@@ -42,53 +42,50 @@ export const PERSONAS: Persona[] = [
     id: "mason-vale",
     displayName: "Mason Vale",
     firstName: "Mason",
-    age: 32,
-    archetypeLabel: "Open buyer",
-    trainingTier: 1,
-    nicheGoal: "handle inbound volume without leads slipping",
+    age: 41,
+    archetypeLabel: "Emotional, messy buyer",
+    trainingTier: 3,
+    nicheGoal: "energy, health, and a body they are proud of — mixed goals",
     backgroundStory:
-      "Online coach / creator with real traction: more DMs and leads than before, but you are still managing conversations yourself. Backend systems are not keeping up; opportunities slip when you are busy. Demand is not the problem — bandwidth and follow-through are.",
+      "Professional or owner who wants better health, energy, and physique, but goals feel tangled. Plateaued despite effort; noisy advice online. Wants someone credible to simplify the path — emotionally honest, not always structured when they speak.",
     painPoints: [
-      "Too much volume, not enough time to reply consistently",
-      "Leads slip through the cracks during busy weeks",
-      "No real system — patching with manual DMs and reminders",
-      "Growth feels chaotic even though revenue is up",
+      "Energy lower than it should be; feels “off”",
+      "Tried a lot — little that stuck",
+      "Overwhelmed by conflicting advice",
+      "Fear this becomes another strong start that fades",
     ],
     buyingResistance: [
-      "Will it still sound like me and not robotic?",
-      "How much do I have to set up on my side?",
+      "Bad advice before",
+      "Unsure what is actually right for their body and schedule",
     ],
     likelyObjections: [
-      "I need to make sure my brand voice stays mine",
-      "What do you need from me for this to work?",
-      "What kind of results are normal?",
-      "Walk me through what happens next",
+      "I need to know it is actually personalized",
+      "How do I know you know what is right for me?",
+      "I do not want another program that fizzles",
+      "There is so much noise online — I do not trust sources anymore",
     ],
     emotionalTriggers: [
-      "Not wasting momentum",
-      "Relief from chaos",
-      "Trust that nothing important gets dropped",
+      "Feeling understood and organized when they cannot articulate it cleanly",
+      "Credibility and specificity over hype",
     ],
     budgetSensitivity: "medium",
     urgencyLevel: "high",
     trustLevel: "medium",
     personalityType:
-      "Open, cooperative, practical objections only — answers clearly if you ask decent questions; light redirect if you pitch too early, not hostile",
+      "Emotionally real, sometimes scattered — rewards labeling and clarity; goes cold if you stay generic",
     unlockedByDefault: true,
-    objectionDifficulty: "beginner",
+    objectionDifficulty: "advanced",
     avatarTone: "warm",
     initialGreeting:
-      "Hey — yeah, I can hear you. Honestly I jumped on because things are picking up and I need help handling the volume before more leads slip.",
+      "Hey… thanks. I know something needs to change. I have felt off for a while and I have tried a bunch of things — I just do not know what actually works for me anymore.",
     practiceObjectives: [
-      "Quantify inbound volume, where leads die, and cost of a missed conversation.",
-      "Tie your offer to missed opportunity and consistency, not generic “scale” hype.",
-      "Surface the hidden worry: sounding robotic vs staying personal.",
-      "Earn a clear next step (trial, pilot, or second call) — Mason moves once trust is there.",
+      "Help them organize mixed goals into one clear problem statement they agree with.",
+      "Earn trust with specificity and empathy before the prescription.",
+      "Address “another failed attempt” fear directly with mechanism and expectations.",
     ],
     practiceConstraints: [
-      "Do not steamroll — he is already cooperative.",
-      "If you pitch before a solid summary of his world, he redirects lightly; stay curious.",
-      "Reward: accurate mirroring (“sounds like demand is fine, follow-up is the leak”).",
+      "Punish generic wellness talk — they notice immediately.",
+      "If you label well, they relieve and open; if you skip diagnosis, they go vague.",
     ],
   },
   {
@@ -145,52 +142,55 @@ export const PERSONAS: Persona[] = [
     id: "adrian-sol",
     displayName: "Adrian Sol",
     firstName: "Adrian",
-    age: 41,
-    archetypeLabel: "Emotional, messy buyer",
-    trainingTier: 3,
-    nicheGoal: "energy, health, and a body they are proud of — mixed goals",
+    age: 32,
+    archetypeLabel: "Open buyer",
+    trainingTier: 1,
+    nicheGoal: "handle inbound volume without leads slipping",
     backgroundStory:
-      "Professional or owner who wants better health, energy, and physique, but goals feel tangled. Plateaued despite effort; noisy advice online. Wants someone credible to simplify the path — emotionally honest, not always structured when they speak.",
+      "Online coach / creator with real traction: more DMs and leads than before, but you are still managing conversations yourself. Backend systems are not keeping up; opportunities slip when you are busy. Demand is not the problem — bandwidth and follow-through are.",
     painPoints: [
-      "Energy lower than it should be; feels “off”",
-      "Tried a lot — little that stuck",
-      "Overwhelmed by conflicting advice",
-      "Fear this becomes another strong start that fades",
+      "Too much volume, not enough time to reply consistently",
+      "Leads slip through the cracks during busy weeks",
+      "No real system — patching with manual DMs and reminders",
+      "Growth feels chaotic even though revenue is up",
     ],
     buyingResistance: [
-      "Bad advice before",
-      "Unsure what is actually right for their body and schedule",
+      "Will it still sound like me and not robotic?",
+      "How much do I have to set up on my side?",
     ],
     likelyObjections: [
-      "I need to know it is actually personalized",
-      "How do I know you know what is right for me?",
-      "I do not want another program that fizzles",
-      "There is so much noise online — I do not trust sources anymore",
+      "I need to make sure my brand voice stays mine",
+      "What do you need from me for this to work?",
+      "What kind of results are normal?",
+      "Walk me through what happens next",
     ],
     emotionalTriggers: [
-      "Feeling understood and organized when they cannot articulate it cleanly",
-      "Credibility and specificity over hype",
+      "Not wasting momentum",
+      "Relief from chaos",
+      "Trust that nothing important gets dropped",
     ],
     budgetSensitivity: "medium",
     urgencyLevel: "high",
     trustLevel: "medium",
     personalityType:
-      "Emotionally real, sometimes scattered — rewards labeling and clarity; goes cold if you stay generic",
+      "Open, cooperative, practical objections only — answers clearly if you ask decent questions; light redirect if you pitch too early, not hostile",
     unlockedByDefault: false,
-    objectionDifficulty: "advanced",
+    objectionDifficulty: "beginner",
     avatarTone: "warm",
     initialGreeting:
-      "Hey… thanks. I know something needs to change. I have felt off for a while and I have tried a bunch of things — I just do not know what actually works for me anymore.",
-    unlockMinOverall: 64,
+      "Hey — yeah, I can hear you. Honestly I jumped on because things are picking up and I need help handling the volume before more leads slip.",
+    unlockMinOverall: 0,
     unlockMinCalls: 3,
     practiceObjectives: [
-      "Help them organize mixed goals into one clear problem statement they agree with.",
-      "Earn trust with specificity and empathy before the prescription.",
-      "Address “another failed attempt” fear directly with mechanism and expectations.",
+      "Quantify inbound volume, where leads die, and cost of a missed conversation.",
+      "Tie your offer to missed opportunity and consistency, not generic “scale” hype.",
+      "Surface the hidden worry: sounding robotic vs staying personal.",
+      "Earn a clear next step (trial, pilot, or second call) — Adrian moves once trust is there.",
     ],
     practiceConstraints: [
-      "Punish generic wellness talk — they notice immediately.",
-      "If you label well, they relieve and open; if you skip diagnosis, they go vague.",
+      "Do not steamroll — he is already cooperative.",
+      "If you pitch before a solid summary of his world, he redirects lightly; stay curious.",
+      "Reward: accurate mirroring (“sounds like demand is fine, follow-up is the leak”).",
     ],
   },
   {
@@ -293,6 +293,18 @@ export const PERSONAS: Persona[] = [
     ],
   },
 ];
+
+/** Locked-picker copy: avoids showing "0+ best" when only call count gates unlock. */
+export function personaUnlockShortLabel(p: Persona): string {
+  const calls = p.unlockMinCalls ?? 0;
+  const score = p.unlockMinOverall;
+  const wantsScore = score != null && score > 0;
+  const wantsCalls = calls > 0;
+  if (wantsScore && wantsCalls) return `${score}+ · ${calls} calls`;
+  if (wantsCalls) return `${calls}+ calls`;
+  if (wantsScore) return `${score}+ best`;
+  return "Locked";
+}
 
 export function isPersonaUnlocked(p: Persona, progress: UserProgress): boolean {
   if (p.unlockedByDefault) return true;

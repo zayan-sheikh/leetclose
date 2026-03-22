@@ -6,7 +6,11 @@ import Link from "next/link";
 import Avatar, { type AvatarHandle } from "@/components/Avatar";
 import CallTimer from "@/components/CallTimer";
 import Transcript, { TranscriptMessage } from "@/components/Transcript";
-import { getPersonaById, PERSONAS } from "@/lib/personas";
+import {
+  getPersonaById,
+  PERSONAS,
+  personaUnlockShortLabel,
+} from "@/lib/personas";
 import CallProblemPanel from "@/components/CallProblemPanel";
 import PersonaFace from "@/components/PersonaFace";
 import { TRAINING_MODES, getModeById, type TrainingModeId } from "@/lib/modes";
@@ -106,7 +110,10 @@ export default function CallPage() {
   useEffect(() => {
     const valid = new Set(PERSONAS.map((p) => p.id));
     const stored = localStorage.getItem("closearena_call_persona");
-    if (stored && valid.has(stored)) setPersonaId(stored);
+    if (stored && valid.has(stored)) {
+      const p = getPersonaById(stored);
+      if (personaAllowed(p, loadProgress())) setPersonaId(stored);
+    }
   }, []);
 
   const progress =
@@ -776,9 +783,7 @@ export default function CallPage() {
                         <br />
                         {!allowed ? (
                           <span title="Unlock via dashboard progress">
-                            {p.unlockMinOverall != null
-                              ? `${p.unlockMinOverall}+ · ${p.unlockMinCalls ?? 0} calls`
-                              : "Locked"}
+                            {personaUnlockShortLabel(p)}
                           </span>
                         ) : (
                           "Ready"

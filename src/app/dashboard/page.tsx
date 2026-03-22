@@ -10,6 +10,7 @@ import {
   getAvailablePersonas,
   isPersonaUnlocked,
   PERSONAS,
+  personaUnlockShortLabel,
 } from "@/lib/personas";
 import {
   BADGE_DEFS,
@@ -372,10 +373,7 @@ export default function DashboardPage() {
               <ul className="mt-3 max-h-36 space-y-1 overflow-y-auto text-xs">
                 {PERSONAS.map((p) => {
                   const open = isPersonaUnlocked(p, progress);
-                  const gate =
-                    !open && p.unlockMinOverall != null
-                      ? `${p.unlockMinOverall}+ best · ${p.unlockMinCalls ?? 0}+ calls`
-                      : null;
+                  const gate = !open ? personaUnlockShortLabel(p) : null;
                   return (
                     <li
                       key={p.id}
