@@ -1,6 +1,28 @@
 "use client";
 
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import {
+  AgentEventsEnum,
+  LiveAvatarSession,
+  SessionEvent,
+} from "@heygen/liveavatar-web-sdk";
+import {
+  isLiveAvatarRoomConnected,
+  liveSpeakText,
+  liveSpeakResponse,
+} from "@/lib/liveavatar-speak";
 import type { Persona } from "@/lib/personas";
+
+export type AvatarHandle = {
+  /** Speaks via Live Avatar (HeyGen). Waits until the session is ready, then until speech ends. */
+  speak: (text: string) => Promise<void>;
+};
 
 interface AvatarProps {
   isTalking: boolean;
@@ -10,125 +32,266 @@ interface AvatarProps {
 }
 
 const toneRing = {
-  warm: "from-amber-400/90 via-orange-300/80 to-rose-400/85",
-  neutral: "from-zinc-300/90 via-slate-300/80 to-zinc-400/85",
-  cool: "from-sky-400/85 via-cyan-300/75 to-indigo-400/80",
-  deep: "from-sky-500/85 via-cyan-400/75 to-blue-700/80",
+  warm: "ring-accent/40 shadow-accent/10",
+  neutral: "ring-white/20 shadow-white/5",
+  cool: "ring-sky-400/30 shadow-sky-500/10",
+  deep: "ring-amber-900/40 shadow-amber-950/20",
 } as const;
 
-const toneGlow = {
-  warm: "shadow-[0_0_80px_-20px_rgba(251,191,36,0.35)]",
-  neutral: "shadow-[0_0_80px_-20px_rgba(161,161,170,0.25)]",
-  cool: "shadow-[0_0_80px_-20px_rgba(34,211,238,0.3)]",
-  deep: "shadow-[0_0_80px_-20px_rgba(167,139,250,0.35)]",
-} as const;
+const SESSION_WAIT_MS = 30_000;
+const ROOM_WAIT_MS = 10_000;
+const SPEAK_START_TIMEOUT_MS = 12_000;
+const SPEAK_END_TIMEOUT_MS = 90_000;
 
-function initialsFromName(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return (
-      parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
-    ).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase() || "?";
-}
+const Avatar = forwardRef<AvatarHandle, AvatarProps>(function Avatar(
+  { isTalking, isListening, displayName, avatarTone = "warm" },
+  ref,
+) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const sessionRef = useRef<LiveAvatarSession | null>(null);
+  const statusRef = useRef<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-export default function Avatar({
-  isTalking,
-  isListening,
-  displayName,
-  avatarTone = "warm",
-}: AvatarProps) {
   const ring = toneRing[avatarTone];
-  const glow = toneGlow[avatarTone];
-  const initials = initialsFromName(displayName);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
+  useImperativeHandle(ref, () => ({
+    speak: async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      const deadline = Date.now() + SESSION_WAIT_MS;
+      while (Date.now() < deadline) {
+        if (sessionRef.current && statusRef.current === "ready") break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+
+      const session = sessionRef.current;
+      if (!session || statusRef.current !== "ready") {
+        throw new Error("Live Avatar session is not ready");
+      }
+
+      const roomDeadline = Date.now() + ROOM_WAIT_MS;
+      while (Date.now() < roomDeadline && !isLiveAvatarRoomConnected(session)) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      if (!isLiveAvatarRoomConnected(session)) {
+        throw new Error("Live Avatar room is not connected yet");
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        let finished = false;
+        let started = false;
+
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          cleanup();
+          resolve();
+        };
+
+        const onStart = () => {
+          started = true;
+          clearTimeout(startTimeoutId);
+        };
+
+        const onEnd = () => finish();
+
+        const cleanup = () => {
+          session.off(AgentEventsEnum.AVATAR_SPEAK_STARTED, onStart);
+          session.off(AgentEventsEnum.AVATAR_SPEAK_ENDED, onEnd);
+          clearTimeout(retryDispatchId);
+          clearTimeout(startTimeoutId);
+          clearTimeout(timeoutId);
+        };
+
+        const retryDispatchId = setTimeout(() => {
+          if (started || finished) return;
+          try {
+            // Some sandbox sessions only react to response-style command events.
+            liveSpeakResponse(session, trimmed);
+          } catch {
+            /* keep waiting for start timeout */
+          }
+        }, 1200);
+
+        const startTimeoutId = setTimeout(() => {
+          // Some sandbox sessions do not emit AVATAR_SPEAK_STARTED reliably.
+          // Keep waiting for AVATAR_SPEAK_ENDED instead of failing fast.
+          console.warn(
+            "Live Avatar did not emit speak_started in time (possible FULL/LITE mode mismatch)",
+          );
+        }, SPEAK_START_TIMEOUT_MS);
+
+        const timeoutId = setTimeout(() => {
+          // Do not hard-fail the call flow if end events are missing in sandbox mode.
+          finish();
+        }, SPEAK_END_TIMEOUT_MS);
+
+        session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, onStart);
+        session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, onEnd);
+        try {
+          // Use direct text-speak command on data channel; avoid SDK WS dispatch.
+          liveSpeakText(session, trimmed);
+        } catch (e) {
+          try {
+            liveSpeakResponse(session, trimmed);
+          } catch {
+            cleanup();
+            reject(e);
+          }
+        }
+      });
+    },
+  }));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function startSession() {
+      setStatus("loading");
+      setErrorMessage(null);
+
+      try {
+        const res = await fetch("/api/token", { method: "POST" });
+        const payload = await res.json();
+
+        if (!res.ok) {
+          const base =
+            typeof payload.error === "string"
+              ? payload.error
+              : "Could not get Live Avatar token";
+          const detailRaw =
+            payload && typeof payload === "object" && "detail" in payload
+              ? String((payload as { detail?: unknown }).detail ?? "")
+              : "";
+          const detail = detailRaw.trim();
+          throw new Error(detail ? `${base}: ${detail}` : base);
+        }
+
+        const token = payload.token as string | undefined;
+        if (!token) {
+          throw new Error("Missing token in response");
+        }
+
+        if (cancelled) return;
+
+        /* voiceChat: false — we use the browser SpeechRecognition for the user; HeyGen speaks via session.message() */
+        const session = new LiveAvatarSession(token, { voiceChat: false });
+        sessionRef.current = session;
+
+        const onStreamReady = () => {
+          if (cancelled || !videoRef.current) return;
+          session.attach(videoRef.current);
+          setStatus("ready");
+        };
+
+        session.on(SessionEvent.SESSION_STREAM_READY, onStreamReady);
+        await session.start();
+      } catch (e) {
+        if (!cancelled) {
+          setStatus("error");
+          setErrorMessage(
+            e instanceof Error ? e.message : "Live Avatar failed to start",
+          );
+        }
+      }
+    }
+
+    startSession();
+
+    return () => {
+      cancelled = true;
+      const s = sessionRef.current;
+      sessionRef.current = null;
+      void s?.stop();
+    };
+  }, []);
 
   return (
-    <div className="relative flex h-full min-h-[280px] w-full flex-col items-center justify-center px-6 py-10">
-      {/* Stage vignette */}
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_38%,rgba(34,211,238,0.07),transparent_62%),radial-gradient(ellipse_50%_40%_at_50%_100%,rgba(99,102,241,0.06),transparent_55%)]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.35]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-        aria-hidden
-      />
+    <div className="relative flex items-center justify-center w-full h-full">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e] to-[#0a0a15] rounded-xl" />
 
-      <div className="relative z-[1] flex flex-col items-center gap-8">
-        <div className="relative">
+      {isTalking && (
+        <div className="absolute w-48 h-48 bg-accent/10 rounded-full blur-3xl animate-pulse" />
+      )}
+
+      <div className="relative flex flex-col items-center gap-4 w-full max-w-md px-4">
+        <div className="relative w-full aspect-square max-h-[min(70vh,420px)]">
           {isTalking && (
-            <div
-              className="absolute -inset-3 rounded-full border border-cyan-400/25 bg-cyan-400/5 animate-pulse"
-              aria-hidden
-            />
+            <div className="absolute -inset-1 rounded-2xl border-2 border-accent/30 animate-pulse-ring pointer-events-none z-10" />
           )}
+
           <div
-            className={`relative flex h-36 w-36 items-center justify-center rounded-full bg-gradient-to-br p-[3px] ${ring} ${isTalking ? glow : "shadow-2xl shadow-black/50"}`}
+            className={`relative w-full h-full rounded-2xl overflow-hidden bg-black/80 ring-2 shadow-lg ${ring}`}
           >
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0a0a0c] ring-1 ring-white/10">
-              <span className="font-display text-4xl font-semibold tracking-tight text-white/95">
-                {initials}
-              </span>
-            </div>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              playsInline
+              autoPlay
+            />
+
+            {isListening && status === "ready" && (
+              <span
+                className="absolute top-3 right-3 z-20 w-2.5 h-2.5 rounded-full bg-success shadow-lg shadow-success/40 animate-pulse"
+                title="Listening"
+              />
+            )}
+
+            {status === "loading" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm text-white/90">
+                Connecting to Live Avatar…
+              </div>
+            )}
+
+            {status === "error" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 px-4 text-center text-sm text-white/90">
+                <p>Could not load the avatar.</p>
+                {errorMessage && (
+                  <p className="text-xs text-white/60">{errorMessage}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div>
-            <p className="font-display text-lg font-semibold tracking-tight text-white md:text-xl">
-              {displayName}
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">AI prospect · simulated session</p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {isTalking && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-200/95">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                </span>
-                Speaking
-              </span>
-            )}
-            {!isTalking && isListening && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/35 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200/95">
-                <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.7)]" />
-                Listening for you
-              </span>
-            )}
-            {!isTalking && !isListening && (
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-zinc-400">
-                Ready
-              </span>
-            )}
-          </div>
-
+        <div className="flex items-center gap-2">
+          <span className="text-white text-sm font-medium">{displayName}</span>
           {isTalking && (
-            <div
-              className="flex h-9 items-end justify-center gap-1 pt-1"
-              aria-hidden
-            >
-              {[0.35, 0.65, 0.45, 0.85, 0.5, 0.7, 0.4].map((h, i) => (
-                <span
-                  key={i}
-                  className="w-1 rounded-full bg-gradient-to-t from-cyan-600/50 to-cyan-300 animate-shimmer-bar"
-                  style={{
-                    height: `${h * 100}%`,
-                    animationDelay: `${i * 70}ms`,
-                  }}
-                />
-              ))}
+            <div className="flex gap-0.5 items-center">
+              <div
+                className="w-1 h-3 bg-success rounded-full animate-talk"
+                style={{ animationDelay: "0ms" }}
+              />
+              <div
+                className="w-1 h-4 bg-success rounded-full animate-talk"
+                style={{ animationDelay: "50ms" }}
+              />
+              <div
+                className="w-1 h-2 bg-success rounded-full animate-talk"
+                style={{ animationDelay: "100ms" }}
+              />
+              <div
+                className="w-1 h-5 bg-success rounded-full animate-talk"
+                style={{ animationDelay: "150ms" }}
+              />
+              <div
+                className="w-1 h-3 bg-success rounded-full animate-talk"
+                style={{ animationDelay: "200ms" }}
+              />
             </div>
           )}
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default Avatar;

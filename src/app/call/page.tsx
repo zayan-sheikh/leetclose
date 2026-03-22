@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import Avatar from "@/components/Avatar";
+import Avatar, { type AvatarHandle } from "@/components/Avatar";
 import CallTimer from "@/components/CallTimer";
 import Transcript, { TranscriptMessage } from "@/components/Transcript";
 import { getPersonaById, PERSONAS, type Persona } from "@/lib/personas";
@@ -47,6 +47,13 @@ export default function CallPage() {
   const [showSessionLog, setShowSessionLog] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const shouldListenRef = useRef(false);
+  const callStateRef = useRef<CallState>("waiting");
+  const awaitingAiRef = useRef(false);
+  const silenceFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const avatarRef = useRef<AvatarHandle>(null);
   const messagesRef = useRef<TranscriptMessage[]>([]);
   const chatHistoryRef = useRef<{ role: string; content: string }[]>([]);
   const personaIdRef = useRef(personaId);
@@ -62,6 +69,9 @@ export default function CallPage() {
   useEffect(() => {
     isMutedRef.current = isMuted;
   }, [isMuted]);
+  useEffect(() => {
+    callStateRef.current = callState;
+  }, [callState]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -82,46 +92,75 @@ export default function CallPage() {
     return stored ? JSON.parse(stored) : {};
   }, []);
 
-  const speak = useCallback((text: string) => {
-    return new Promise<void>((resolve) => {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(
-          (v) =>
-            v.name.includes("Female") ||
-            v.name.includes("Samantha") ||
-            v.name.includes("Karen") ||
-            v.name.includes("Zira") ||
-            v.name.includes("Google UK English Female") ||
-            (v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
-        );
-        if (femaleVoice) utterance.voice = femaleVoice;
-        utterance.rate = 0.95;
-        utterance.pitch = 1.05;
-        utterance.onstart = () => setIsAiTalking(true);
-        utterance.onend = () => {
-          setIsAiTalking(false);
-          resolve();
-        };
-        utterance.onerror = () => {
-          setIsAiTalking(false);
-          resolve();
-        };
-        window.speechSynthesis.speak(utterance);
-      } else {
-        resolve();
-      }
-    });
+  /** Avatar mounts only after `callState === "active"`; wait until the ref is attached. */
+  const waitForAvatarHandle = useCallback(async (maxMs = 10_000) => {
+    const start = Date.now();
+    while (!avatarRef.current && Date.now() - start < maxMs) {
+      await new Promise((r) => setTimeout(r, 32));
+    }
   }, []);
+
+  const speak = useCallback(
+    async (text: string) => {
+      await waitForAvatarHandle();
+      const heygen = avatarRef.current;
+      if (heygen) {
+        try {
+          setIsAiTalking(true);
+          await heygen.speak(text);
+          setIsAiTalking(false);
+          return;
+        } catch (e) {
+          console.warn("[call] HeyGen speak failed, using browser TTS", e);
+          setIsAiTalking(false);
+        }
+      }
+
+      await new Promise<void>((resolve) => {
+        if ("speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          const voices = window.speechSynthesis.getVoices();
+          const femaleVoice = voices.find(
+            (v) =>
+              v.name.includes("Female") ||
+              v.name.includes("Samantha") ||
+              v.name.includes("Karen") ||
+              v.name.includes("Zira") ||
+              v.name.includes("Google UK English Female") ||
+              (v.lang.startsWith("en") &&
+                v.name.toLowerCase().includes("female")),
+          );
+          if (femaleVoice) utterance.voice = femaleVoice;
+          utterance.rate = 0.95;
+          utterance.pitch = 1.05;
+          utterance.onstart = () => setIsAiTalking(true);
+          utterance.onend = () => {
+            setIsAiTalking(false);
+            resolve();
+          };
+          utterance.onerror = () => {
+            setIsAiTalking(false);
+            resolve();
+          };
+          window.speechSynthesis.speak(utterance);
+        } else {
+          resolve();
+        }
+      });
+    },
+    [waitForAvatarHandle],
+  );
 
   const sendToAI = useCallback(
     async (userText: string) => {
-      chatHistoryRef.current.push({ role: "user", content: userText });
+      const cleaned = userText.trim();
+      if (!cleaned) return;
+
+      chatHistoryRef.current.push({ role: "user", content: cleaned });
       const userMsg: TranscriptMessage = {
         role: "user",
-        content: userText,
+        content: cleaned,
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, userMsg]);
@@ -153,24 +192,77 @@ export default function CallPage() {
         console.error("Failed to get AI response:", error);
       }
     },
-    [getProfile, speak]
+    [getProfile, speak],
   );
 
   const startListening = useCallback(() => {
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-      alert("Speech recognition is not supported in this browser. Please use Chrome.");
+    if (
+      !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
+    ) {
+      alert(
+        "Speech recognition is not supported in this browser. Please use Chrome.",
+      );
+      return;
+    }
+
+    if (recognitionRef.current && (isListening || shouldListenRef.current)) {
       return;
     }
 
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = "en-US";
     recognition.maxAlternatives = 1;
+    shouldListenRef.current = true;
 
     let finalTranscript = "";
+    let interimTranscript = "";
+
+    const clearSilenceFlushTimer = () => {
+      if (silenceFlushTimerRef.current) {
+        clearTimeout(silenceFlushTimerRef.current);
+        silenceFlushTimerRef.current = null;
+      }
+    };
+
+    const submitTranscript = async (text: string) => {
+      const cleaned = text.trim();
+      if (!cleaned || awaitingAiRef.current) return;
+
+      awaitingAiRef.current = true;
+      shouldListenRef.current = false;
+      clearSilenceFlushTimer();
+      setCurrentTranscript("");
+      setIsListening(false);
+
+      try {
+        recognition.stop();
+      } catch {
+        /* ignore */
+      }
+
+      finalTranscript = "";
+      interimTranscript = "";
+
+      try {
+        await sendToAI(cleaned);
+      } finally {
+        awaitingAiRef.current = false;
+        shouldListenRef.current =
+          callStateRef.current === "active" && !isMutedRef.current;
+        if (shouldListenRef.current) {
+          try {
+            recognition.start();
+            setIsListening(true);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+    };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
@@ -178,57 +270,91 @@ export default function CallPage() {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           finalTranscript += transcript + " ";
-          const textToSend = finalTranscript.trim();
-          if (textToSend) {
-            recognition.stop();
-            setIsListening(false);
-            setCurrentTranscript("");
-            finalTranscript = "";
-            setSpeechHint(null);
-            sendToAI(textToSend).then(() => {
-              try {
-                recognition.start();
-                setIsListening(true);
-              } catch {
-                /* ignore */
-              }
-            });
-          }
         } else {
           interim += transcript;
         }
       }
-      setCurrentTranscript(interim);
+
+      interimTranscript = interim.trim();
+      setCurrentTranscript(interimTranscript);
+
+      const textToSend = finalTranscript.trim();
+      if (textToSend) {
+        void submitTranscript(textToSend);
+        return;
+      }
+
+      if (interimTranscript) {
+        clearSilenceFlushTimer();
+        silenceFlushTimerRef.current = setTimeout(() => {
+          void submitTranscript(interimTranscript);
+        }, 1600);
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      clearSilenceFlushTimer();
       const code = event.error;
-      if (code === "no-speech" || code === "aborted") return;
-
-      if (code === "network") {
+      if (code === "no-speech" || code === "aborted") {
+        /* may still restart below */
+      } else if (code === "network") {
         setSpeechHint(
-          "Voice-to-text needs an internet connection (Chrome sends audio to Google). Use “Type reply” below, or check Wi‑Fi / VPN / firewall."
+          "Voice-to-text needs an internet connection (Chrome sends audio to Google). Use “Type reply” below, or check Wi‑Fi / VPN / firewall.",
         );
-        return;
-      }
-      if (code === "not-allowed" || code === "service-not-allowed") {
-        setSpeechHint("Microphone permission blocked. Allow mic for this site or use “Type reply” below.");
-        return;
-      }
-      if (code === "audio-capture") {
-        setSpeechHint("No microphone detected or it’s in use elsewhere. Try “Type reply” or unplug other apps using the mic.");
-        return;
-      }
-
-      if (process.env.NODE_ENV === "development") {
+      } else if (code === "not-allowed" || code === "service-not-allowed") {
+        setSpeechHint(
+          "Microphone permission blocked. Allow mic for this site or use “Type reply” below.",
+        );
+      } else if (code === "audio-capture") {
+        setSpeechHint(
+          "No microphone detected or it’s in use elsewhere. Try “Type reply” or unplug other apps using the mic.",
+        );
+      } else if (process.env.NODE_ENV === "development") {
         console.warn("Speech recognition:", code);
+      } else {
+        console.error("Speech recognition error:", code);
+      }
+      if (
+        shouldListenRef.current &&
+        callStateRef.current === "active" &&
+        !awaitingAiRef.current &&
+        !isMutedRef.current
+      ) {
+        setTimeout(() => {
+          try {
+            recognition.start();
+            setIsListening(true);
+          } catch {
+            /* ignore */
+          }
+        }, 250);
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      clearSilenceFlushTimer();
+      if (
+        shouldListenRef.current &&
+        callStateRef.current === "active" &&
+        !awaitingAiRef.current &&
+        !isMutedRef.current
+      ) {
+        setTimeout(() => {
+          try {
+            recognition.start();
+            setIsListening(true);
+          } catch {
+            /* ignore */
+          }
+        }, 250);
       }
     };
 
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-  }, [sendToAI]);
+  }, [isListening, sendToAI]);
 
   const sendTypedReply = useCallback(() => {
     const t = typedLine.trim();
@@ -278,9 +404,34 @@ export default function CallPage() {
       await new Promise((r) => setTimeout(r, 500));
     }
 
-    const greeting = getInitialMessageForPersona(personaId);
+    let greeting = getInitialMessageForPersona(personaId);
+    try {
+      const openingProbe =
+        "Start the roleplay call naturally with one short opening line as the prospect.";
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: openingProbe }],
+          profile: getProfile(),
+          personaId,
+          modeId,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (typeof data?.response === "string" && data.response.trim()) {
+          greeting = data.response.trim();
+        }
+      }
+    } catch (e) {
+      console.warn("[call] Initial Gemini greeting failed, using fallback", e);
+    }
+
     chatHistoryRef.current.push({ role: "assistant", content: greeting });
-    setMessages([{ role: "prospect", content: greeting, timestamp: Date.now() }]);
+    setMessages([
+      { role: "prospect", content: greeting, timestamp: Date.now() },
+    ]);
     await speak(greeting);
     startListening();
   }, [personaId, modeId, speak, startListening]);
@@ -289,6 +440,12 @@ export default function CallPage() {
     setCallState("ended");
     setIsListening(false);
     setIsAiTalking(false);
+    shouldListenRef.current = false;
+    awaitingAiRef.current = false;
+    if (silenceFlushTimerRef.current) {
+      clearTimeout(silenceFlushTimerRef.current);
+      silenceFlushTimerRef.current = null;
+    }
 
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -301,7 +458,9 @@ export default function CallPage() {
 
     const callData = {
       messages: messagesRef.current,
-      duration: callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0,
+      duration: callStartTime
+        ? Math.floor((Date.now() - callStartTime) / 1000)
+        : 0,
       timestamp: Date.now(),
       personaId,
       modeId,
@@ -370,8 +529,14 @@ export default function CallPage() {
 
   const toggleMute = useCallback(() => {
     if (isMuted) {
+      shouldListenRef.current = true;
       startListening();
     } else {
+      shouldListenRef.current = false;
+      if (silenceFlushTimerRef.current) {
+        clearTimeout(silenceFlushTimerRef.current);
+        silenceFlushTimerRef.current = null;
+      }
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -590,6 +755,7 @@ export default function CallPage() {
                     aria-hidden
                   />
                   <Avatar
+                    ref={avatarRef}
                     isTalking={isAiTalking}
                     isListening={isListening}
                     displayName={activePersona.displayName}
