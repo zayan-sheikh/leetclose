@@ -161,6 +161,16 @@ export default function FeedbackPage() {
           </div>
         </div>
 
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => router.push("/feedback/deep-dive")}
+            className="w-full md:w-auto px-6 py-3 bg-accent hover:bg-accent-hover text-white rounded-xl font-semibold"
+          >
+            AI Deep Dive
+          </button>
+        </div>
+
         {feedback.momentsAtRisk.length > 0 && (
           <div className="bg-card border border-border rounded-2xl p-6 mb-6">
             <h2 className="font-semibold mb-3">Moments where you may have lost momentum</h2>

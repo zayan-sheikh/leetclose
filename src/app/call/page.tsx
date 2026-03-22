@@ -25,7 +25,7 @@ export default function CallPage() {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
   const [currentTranscript, setCurrentTranscript] = useState("");
-  const [personaId, setPersonaId] = useState<string>("sarah-busy-mom");
+  const [personaId, setPersonaId] = useState<string>("mason-vale");
   const [modeId, setModeId] = useState<TrainingModeId>("full_call");
   const [stripeSent, setStripeSent] = useState(false);
   const [sendingStripe, setSendingStripe] = useState(false);
@@ -370,7 +370,7 @@ export default function CallPage() {
     ]);
     await speak(greeting);
     startListening();
-  }, [personaId, modeId, speak, startListening]);
+  }, [personaId, modeId, speak, startListening, getProfile]);
 
   const endCall = useCallback(() => {
     setCallState("ended");
