@@ -443,11 +443,15 @@ export default function CallPage() {
     setCallState("ended");
     setIsListening(false);
     setIsAiTalking(false);
+    setIsMuted(true);
+    isMutedRef.current = true;
     shouldListenRef.current = false;
     awaitingAiRef.current = false;
     clearSilenceFlushTimer();
     setCurrentTranscript("");
     currentTranscriptRef.current = "";
+
+    avatarRef.current?.hardSilence();
 
     if (recognitionRef.current) {
       try {
@@ -905,13 +909,26 @@ export default function CallPage() {
                     aria-hidden
                   />
                   <div className="relative z-0 flex min-h-[min(42dvh,240px)] min-w-0 flex-1 flex-col lg:h-full lg:min-h-0">
-                    <Avatar
-                      ref={avatarRef}
-                      isTalking={isAiTalking}
-                      isListening={isListening}
-                      displayName={activePersona.displayName}
-                      avatarTone={activePersona.avatarTone}
-                    />
+                    {showUpgradeOverlay ? (
+                      <div className="flex h-full w-full items-center justify-center bg-[#06090f]">
+                        <div className="rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-center">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                            Session ended
+                          </p>
+                          <p className="mt-1 text-sm text-zinc-300">
+                            Upgrade to continue this live call.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <Avatar
+                        ref={avatarRef}
+                        isTalking={isAiTalking}
+                        isListening={isListening}
+                        displayName={activePersona.displayName}
+                        avatarTone={activePersona.avatarTone}
+                      />
+                    )}
                     {currentTranscript && (
                       <div className="absolute bottom-3 left-2 right-2 z-[1] max-w-[min(100%,28rem)] sm:bottom-4 sm:left-3 sm:right-3 md:max-w-[min(100%,26rem)]">
                         <div className="rounded-lg border border-sky-400/35 bg-black/75 px-3 py-2 shadow-lg backdrop-blur-md">
@@ -1105,13 +1122,16 @@ export default function CallPage() {
       {showUpgradeOverlay && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm">
           <div className="w-full max-w-4xl rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-7">
-            <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
-              Upgrade plan to tier 2 or 3 for more time with {activePersona.firstName}!
+            <h2 className="font-display text-xl text-foreground sm:text-2xl">
+              Upgrade your plan to tier 2 or 3 for more time with{" "}
+              {activePersona.firstName}
             </h2>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <section className="flex flex-col rounded-xl border border-border bg-background/70 p-4 text-sm text-muted">
-                <p className="font-semibold text-foreground">Starter Rep, Tier 1 (Free):</p>
+                <p className="font-semibold text-foreground">
+                  Starter Rep, Tier 1 (Free):
+                </p>
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed">
                   <li>Limited practice sessions</li>
                   <li>Basic sales scenarios</li>
@@ -1127,7 +1147,9 @@ export default function CallPage() {
               </section>
 
               <section className="flex flex-col rounded-xl border border-accent/55 bg-accent/12 p-4 text-sm text-muted shadow-[0_0_0_1px_rgba(67,89,226,0.22)]">
-                <p className="font-semibold text-foreground">Pro Seller, Tier 2 ($29/mo)</p>
+                <p className="font-semibold text-foreground">
+                  Pro Seller, Tier 2 ($29/mo)
+                </p>
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed">
                   <li>Unlimited practice sessions</li>
                   <li>Multiple call types</li>
@@ -1144,7 +1166,9 @@ export default function CallPage() {
               </section>
 
               <section className="flex flex-col rounded-xl border border-accent/70 bg-[#1a2147] p-4 text-sm text-slate-200 shadow-[0_0_0_1px_rgba(52,66,156,0.35)]">
-                <p className="font-semibold text-foreground">Tier 3, Sales Team ($49/mo)</p>
+                <p className="font-semibold text-foreground">
+                  Tier 3, Sales Team ($49/mo)
+                </p>
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed">
                   <li>Everything in Tier 2</li>
                   <li>Multiple team members</li>
@@ -1154,7 +1178,7 @@ export default function CallPage() {
                 </ul>
                 <button
                   type="button"
-                  className="mt-auto w-full rounded-lg border border-accent/70 bg-accent px-3 py-2 text-sm font-semibold text-white"
+                  className="btn-primary-glow mt-auto w-full rounded-lg border border-accent/70 px-3 py-2 text-sm font-semibold text-white"
                 >
                   Upgrade now
                 </button>
@@ -1167,7 +1191,7 @@ export default function CallPage() {
                 onClick={endCall}
                 className="cursor-pointer text-sm font-medium text-muted underline underline-offset-2 transition-colors hover:text-foreground"
               >
-                {'-> '}No thanks, show me my results
+                {"-> "}No thanks, show me my results
               </button>
             </div>
           </div>

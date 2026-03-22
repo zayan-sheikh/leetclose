@@ -70,7 +70,8 @@ export default function FeedbackPage() {
         let userName = "Coach";
         try {
           const u = localStorage.getItem("closearena_user");
-          if (u) userName = JSON.parse(u).name || JSON.parse(u).email || "Coach";
+          if (u)
+            userName = JSON.parse(u).name || JSON.parse(u).email || "Coach";
         } catch {
           /* ignore */
         }
@@ -157,17 +158,21 @@ export default function FeedbackPage() {
       <div className="relative mx-auto max-w-3xl px-4 py-8">
         <div className="mb-8 text-center">
           <p className="label-overline">Debrief</p>
-          <h1 className="font-display mt-2 text-3xl font-bold tracking-tight">Call results</h1>
+          <h1 className="font-display mt-2 text-3xl font-bold tracking-tight">
+            Call results
+          </h1>
           <p className="mt-2 text-sm text-muted">
             {minutes}m {seconds}s ·{" "}
-            {callData.messages.filter((m) => m.role === "user").length} coach turns · vs{" "}
-            {prospectLabel}
+            {callData.messages.filter((m) => m.role === "user").length} coach
+            turns · vs {prospectLabel}
           </p>
         </div>
 
         <div className="card-premium mb-6 p-8 pt-9 text-center">
           <div className="mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-full border-2 border-cyan-400/35 bg-gradient-to-b from-cyan-500/10 to-transparent shadow-[0_0_40px_-12px_var(--glow-cyan)]">
-            <span className="font-display text-4xl font-bold text-white">{scores.overall}</span>
+            <span className="font-display text-4xl font-bold text-white">
+              {scores.overall}
+            </span>
           </div>
           <p className="font-hud text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
             Overall score
@@ -179,27 +184,41 @@ export default function FeedbackPage() {
         </div>
 
         <div className="card-premium mb-6 space-y-4 p-6 pt-7">
-          <h2 className="font-display text-base font-semibold">Score breakdown</h2>
+          <h2 className="font-display text-base font-semibold">
+            Score breakdown
+          </h2>
           <ScoreBar label="Rapport" score={scores.rapport} />
           <ScoreBar label="Discovery depth" score={scores.discovery} />
           <ScoreBar label="Pain extraction" score={scores.painExtraction} />
-          <ScoreBar label="Emotional connection" score={scores.emotionalConnection} />
+          <ScoreBar
+            label="Emotional connection"
+            score={scores.emotionalConnection}
+          />
           <ScoreBar label="Control of the call" score={scores.callControl} />
           <ScoreBar label="Clarity of offer" score={scores.offerClarity} />
           <ScoreBar label="Confidence" score={scores.confidence} />
-          <ScoreBar label="Objection handling" score={scores.objectionHandling} />
+          <ScoreBar
+            label="Objection handling"
+            score={scores.objectionHandling}
+          />
           <ScoreBar label="Closing strength" score={scores.closing} />
           <ScoreBar label="Payment ask timing" score={scores.paymentTiming} />
         </div>
 
         <div className="card-premium mb-6 p-6 pt-7">
-          <h2 className="font-display text-base font-semibold text-cyan-300/95">AI coach summary</h2>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-300">{feedback.coachSummary}</p>
+          <h2 className="font-display text-base font-semibold text-cyan-300/95">
+            AI coach summary
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+            {feedback.coachSummary}
+          </p>
           <div className="mt-5 rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-4">
             <p className="font-hud text-[10px] font-semibold uppercase tracking-wider text-cyan-400/90">
               Suggested retry challenge
             </p>
-            <p className="mt-1.5 text-sm text-zinc-200">{feedback.retryChallenge}</p>
+            <p className="mt-1.5 text-sm text-zinc-200">
+              {feedback.retryChallenge}
+            </p>
           </div>
         </div>
 
@@ -228,7 +247,9 @@ export default function FeedbackPage() {
 
         {feedback.momentsAtRisk.length > 0 && (
           <div className="card-premium mb-6 p-6 pt-7">
-            <h2 className="font-display text-base font-semibold">Momentum risks</h2>
+            <h2 className="font-display text-base font-semibold">
+              Momentum risks
+            </h2>
             <ul className="mt-3 space-y-2 text-sm text-zinc-400">
               {feedback.momentsAtRisk.map((item, i) => (
                 <li key={i}>• {item}</li>
@@ -239,7 +260,9 @@ export default function FeedbackPage() {
 
         {feedback.objectionsMishandled.length > 0 && (
           <div className="card-premium mb-6 p-6 pt-7">
-            <h2 className="font-display text-base font-semibold">Objections to tighten</h2>
+            <h2 className="font-display text-base font-semibold">
+              Objections to tighten
+            </h2>
             <ul className="mt-3 space-y-2 text-sm text-zinc-400">
               {feedback.objectionsMishandled.map((item, i) => (
                 <li key={i}>• {item}</li>
@@ -249,7 +272,9 @@ export default function FeedbackPage() {
         )}
 
         <div className="card-premium mb-6 p-6 pt-7">
-          <h2 className="font-display text-base font-semibold">Better lines to steal</h2>
+          <h2 className="font-display text-base font-semibold">
+            Better lines to steal
+          </h2>
           <ul className="mt-3 space-y-2 text-sm text-zinc-400">
             {feedback.betterResponses.map((item, i) => (
               <li key={i} className="italic text-zinc-300">
@@ -273,7 +298,9 @@ export default function FeedbackPage() {
         )}
 
         <div className="card-premium mb-6 p-6 pt-7">
-          <h2 className="font-display mb-4 text-base font-semibold">Transcript</h2>
+          <h2 className="font-display mb-4 text-base font-semibold">
+            Transcript
+          </h2>
           <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
             {callData.messages.map((msg, i) => (
               <div key={i} className="flex gap-3">
@@ -298,11 +325,15 @@ export default function FeedbackPage() {
         </div>
 
         <div className="card-premium mb-8 p-6 pt-7">
-          <h2 className="font-display text-base font-semibold">Badges &amp; XP</h2>
+          <h2 className="font-display text-base font-semibold">
+            Badges &amp; XP
+          </h2>
           <p className="mt-2 text-sm text-muted">
             +XP applied · Level {progress.level} ·{" "}
-            <span className="font-hud text-zinc-300">{progress.xp.toLocaleString()} XP</span> ·{" "}
-            {progress.streak} day streak
+            <span className="font-hud text-zinc-300">
+              {progress.xp.toLocaleString()} XP
+            </span>{" "}
+            · {progress.streak} day streak
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {progress.badges.map((id) => {
@@ -318,7 +349,9 @@ export default function FeedbackPage() {
               );
             })}
             {progress.badges.length === 0 && (
-              <span className="text-sm text-muted">Keep practicing to unlock badges.</span>
+              <span className="text-sm text-muted">
+                Keep practicing to unlock badges.
+              </span>
             )}
           </div>
         </div>

@@ -22,6 +22,8 @@ import type { Persona } from "@/lib/personas";
 export type AvatarHandle = {
   /** Speaks via Live Avatar (HeyGen). Waits until the session is ready, then until speech ends. */
   speak: (text: string) => Promise<void>;
+  /** Immediately silences any active media and stops the underlying HeyGen session. */
+  hardSilence: () => void;
 };
 
 interface AvatarProps {
@@ -148,6 +150,26 @@ const Avatar = forwardRef<AvatarHandle, AvatarProps>(function Avatar(
           }
         }
       });
+    },
+    hardSilence: () => {
+      const video = videoRef.current;
+      if (video) {
+        video.muted = true;
+        video.volume = 0;
+        const stream = video.srcObject as MediaStream | null;
+        if (stream) {
+          stream.getAudioTracks().forEach((track) => {
+            track.enabled = false;
+          });
+        }
+      }
+
+      const session = sessionRef.current;
+      if (session) {
+        void session.stop().catch(() => {
+          /* ignore stop errors during forced teardown */
+        });
+      }
     },
   }));
 
