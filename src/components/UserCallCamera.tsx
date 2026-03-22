@@ -44,7 +44,7 @@ function drawFaceLandmarks(
 
   if (!landmarks?.length) return;
 
-  const rMain = Math.max(0.9, Math.min(vw, vh) * 0.00205);
+  const rMain = Math.max(0.95, Math.min(vw, vh) * 0.00218);
   const rFirst = rMain * 1.35;
 
   for (let i = 0; i < landmarks.length; i++) {
