@@ -229,98 +229,98 @@ export default function DeepDiveFeedbackPage() {
             ref={messageListRef}
             className="h-[52vh] overflow-y-auto p-4 space-y-3"
           >
-            {messages.map((m, i) => (
+            {messages.map((m, i) =>
               m.role === "assistant" && !m.content.trim() ? null : (
-              <div
-                key={`${m.timestamp}-${i}`}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-              >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "bg-accent text-white"
-                      : "bg-background border border-border text-foreground"
-                  }`}
+                  key={`${m.timestamp}-${i}`}
+                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  {m.role === "assistant" ? (
-                    <div className="max-w-none text-foreground">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          h1: ({ children }) => (
-                            <h1 className="text-base font-bold mt-2 mb-2">
-                              {children}
-                            </h1>
-                          ),
-                          h2: ({ children }) => (
-                            <h2 className="text-sm font-bold mt-2 mb-2">
-                              {children}
-                            </h2>
-                          ),
-                          h3: ({ children }) => (
-                            <h3 className="text-sm font-semibold mt-2 mb-1">
-                              {children}
-                            </h3>
-                          ),
-                          p: ({ children }) => (
-                            <p className="my-2 leading-relaxed">{children}</p>
-                          ),
-                          ul: ({ children }) => (
-                            <ul className="list-disc pl-5 my-2 space-y-1">
-                              {children}
-                            </ul>
-                          ),
-                          ol: ({ children }) => (
-                            <ol className="list-decimal pl-5 my-2 space-y-1">
-                              {children}
-                            </ol>
-                          ),
-                          li: ({ children }) => <li>{children}</li>,
-                          strong: ({ children }) => (
-                            <strong className="font-extrabold text-foreground">
-                              {children}
-                            </strong>
-                          ),
-                          em: ({ children }) => (
-                            <em className="italic">{children}</em>
-                          ),
-                          blockquote: ({ children }) => (
-                            <blockquote className="border-l-2 border-border pl-3 my-2 text-muted">
-                              {children}
-                            </blockquote>
-                          ),
-                          code: ({ children }) => (
-                            <code className="px-1 py-0.5 rounded bg-black/10 text-[13px] font-mono">
-                              {children}
-                            </code>
-                          ),
-                          pre: ({ children }) => (
-                            <pre className="my-2 p-3 rounded-lg bg-black/70 text-white overflow-x-auto text-[13px]">
-                              {children}
-                            </pre>
-                          ),
-                          a: ({ href, children }) => (
-                            <a
-                              href={href}
-                              className="underline text-accent"
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {children}
-                            </a>
-                          ),
-                        }}
-                      >
-                        {m.content}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    m.content
-                  )}
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-accent text-white"
+                        : "bg-background border border-border text-foreground"
+                    }`}
+                  >
+                    {m.role === "assistant" ? (
+                      <div className="max-w-none text-foreground">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            h1: ({ children }) => (
+                              <h1 className="text-base font-bold mt-2 mb-2">
+                                {children}
+                              </h1>
+                            ),
+                            h2: ({ children }) => (
+                              <h2 className="text-sm font-bold mt-2 mb-2">
+                                {children}
+                              </h2>
+                            ),
+                            h3: ({ children }) => (
+                              <h3 className="text-sm font-semibold mt-2 mb-1">
+                                {children}
+                              </h3>
+                            ),
+                            p: ({ children }) => (
+                              <p className="my-2 leading-relaxed">{children}</p>
+                            ),
+                            ul: ({ children }) => (
+                              <ul className="list-disc pl-5 my-2 space-y-1">
+                                {children}
+                              </ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol className="list-decimal pl-5 my-2 space-y-1">
+                                {children}
+                              </ol>
+                            ),
+                            li: ({ children }) => <li>{children}</li>,
+                            strong: ({ children }) => (
+                              <strong className="font-extrabold text-foreground">
+                                {children}
+                              </strong>
+                            ),
+                            em: ({ children }) => (
+                              <em className="italic">{children}</em>
+                            ),
+                            blockquote: ({ children }) => (
+                              <blockquote className="border-l-2 border-border pl-3 my-2 text-muted">
+                                {children}
+                              </blockquote>
+                            ),
+                            code: ({ children }) => (
+                              <code className="px-1 py-0.5 rounded bg-black/10 text-[13px] font-mono">
+                                {children}
+                              </code>
+                            ),
+                            pre: ({ children }) => (
+                              <pre className="my-2 p-3 rounded-lg bg-black/70 text-white overflow-x-auto text-[13px]">
+                                {children}
+                              </pre>
+                            ),
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                className="underline text-accent"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      m.content
+                    )}
+                  </div>
                 </div>
-              </div>
-              )
-            ))}
+              ),
+            )}
             {isSending && (
               <div className="text-xs text-muted">AI coach is thinking...</div>
             )}
