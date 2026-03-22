@@ -23,20 +23,20 @@ export default function DashboardNav() {
           href="/dashboard"
           className="font-display flex items-center gap-2.5 font-bold tracking-tight"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-none text-sm font-bold text-foreground">
+          <span className="flex h-9 w-9 items-center justify-center text-sm font-bold text-foreground">
             <Image
               src="/iconwhite.svg"
               alt="LeetClose"
               width={36}
               height={36}
-              className="h-full w-full p-1 dark:hidden"
+              className="h-full w-full dark:hidden"
             />
             <Image
               src="/iconwhite.svg"
               alt="LeetClose"
               width={36}
               height={36}
-              className="hidden h-full w-full p-1 dark:block"
+              className="hidden h-full w-full dark:block"
             />
           </span>
           <span>

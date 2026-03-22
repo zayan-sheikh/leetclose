@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   title: "LeetClose AI — Practice Sales Calls Until Closing Feels Automatic",
   description:
     "AI sales call simulator for online fitness coaches. Train against realistic prospects, objections, and closing — with feedback, XP, and streaks.",
+  icons: {
+    icon: "/iconwhite.svg",
+    shortcut: "/iconwhite.svg",
+    apple: "/iconwhite.svg",
+  },
 };
 
 export default function RootLayout({

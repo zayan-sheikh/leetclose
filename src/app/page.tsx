@@ -13,12 +13,14 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-20 mx-auto max-w-6xl px-4 pt-4">
         <div className="glass-panel flex items-center justify-between rounded-2xl px-5 py-3">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-500 p-[2px] shadow-[0_0_24px_-4px_var(--glow-cyan)]">
-              <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-[#0c0c0e]">
-                <span className="font-display text-sm font-bold text-cyan-300">
-                  CA
-                </span>
-              </div>
+            <div className="relative flex h-9 w-9 items-center justify-center">
+              <img
+                src="/iconwhite.svg"
+                alt="LeetClose"
+                width={36}
+                height={36}
+                className="h-full w-full"
+              />
             </div>
             <span className="font-display text-lg font-bold tracking-tight">
               LeetClose{" "}
@@ -269,10 +271,14 @@ export default function LandingPage() {
       <footer className="border-t border-white/[0.06] px-6 py-8">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-indigo-500">
-              <span className="font-display text-[10px] font-bold text-white">
-                CA
-              </span>
+            <div className="flex h-7 w-7 items-center justify-center">
+              <img
+                src="/iconwhite.svg"
+                alt="LeetClose"
+                width={28}
+                height={28}
+                className="h-full w-full"
+              />
             </div>
             <span className="text-sm text-muted">LeetClose AI</span>
           </div>

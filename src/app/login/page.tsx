@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,12 +30,14 @@ export default function LoginPage() {
       <div className="relative w-full max-w-md">
         <div className="card-premium p-8 pt-9 shadow-2xl md:p-10">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-500 p-[2px] shadow-[0_0_24px_-4px_var(--glow-cyan)]">
-              <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-card">
-                <span className="font-display text-sm font-bold text-accent">
-                  CA
-                </span>
-              </div>
+            <div className="mx-auto mb-5 flex items-center justify-center">
+              <Image
+                src="/iconwhite.svg"
+                alt="LeetClose"
+                width={44}
+                height={44}
+                className="h-11 w-11"
+              />
             </div>
             <p className="label-overline mb-2">Welcome back</p>
             <h1 className="font-display text-2xl font-bold tracking-tight">

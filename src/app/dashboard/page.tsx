@@ -103,7 +103,7 @@ export default function DashboardPage() {
                 Level {progress.level}
               </span>
               {progress.streak >= 2 && (
-                <span className="rounded-lg border border-amber-400/30 bg-amber-400/12 px-3 py-1.5 font-hud text-[11px] font-semibold text-amber-900 dark:text-amber-100">
+                <span className="rounded-lg border border-amber-400/30 bg-amber-400/12 px-3 py-1.5 font-hud text-[11px] font-semibold text-amber-400 dark:text-amber-100">
                   {progress.streak}d streak
                 </span>
               )}
