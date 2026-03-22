@@ -31,6 +31,12 @@ export default function CallPage() {
   const [sendingStripe, setSendingStripe] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const shouldListenRef = useRef(false);
+  const callStateRef = useRef<CallState>("waiting");
+  const awaitingAiRef = useRef(false);
+  const silenceFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const avatarRef = useRef<AvatarHandle>(null);
   const messagesRef = useRef<TranscriptMessage[]>([]);
   const chatHistoryRef = useRef<{ role: string; content: string }[]>([]);
@@ -47,6 +53,9 @@ export default function CallPage() {
   useEffect(() => {
     isMutedRef.current = isMuted;
   }, [isMuted]);
+  useEffect(() => {
+    callStateRef.current = callState;
+  }, [callState]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -125,10 +134,13 @@ export default function CallPage() {
 
   const sendToAI = useCallback(
     async (userText: string) => {
+      const cleaned = userText.trim();
+      if (!cleaned) return;
+
       chatHistoryRef.current.push({ role: "user", content: userText });
       const userMsg: TranscriptMessage = {
         role: "user",
-        content: userText,
+        content: cleaned,
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, userMsg]);
@@ -173,14 +185,63 @@ export default function CallPage() {
       return;
     }
 
+    if (recognitionRef.current && (isListening || shouldListenRef.current)) {
+      return;
+    }
+
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = "en-US";
+    shouldListenRef.current = true;
 
     let finalTranscript = "";
+    let interimTranscript = "";
+
+    const clearSilenceFlushTimer = () => {
+      if (silenceFlushTimerRef.current) {
+        clearTimeout(silenceFlushTimerRef.current);
+        silenceFlushTimerRef.current = null;
+      }
+    };
+
+    const submitTranscript = async (text: string) => {
+      const cleaned = text.trim();
+      if (!cleaned || awaitingAiRef.current) return;
+
+      awaitingAiRef.current = true;
+      shouldListenRef.current = false;
+      clearSilenceFlushTimer();
+      setCurrentTranscript("");
+      setIsListening(false);
+
+      try {
+        recognition.stop();
+      } catch {
+        /* ignore */
+      }
+
+      finalTranscript = "";
+      interimTranscript = "";
+
+      try {
+        await sendToAI(cleaned);
+      } finally {
+        awaitingAiRef.current = false;
+        shouldListenRef.current =
+          callStateRef.current === "active" && !isMutedRef.current;
+        if (shouldListenRef.current) {
+          try {
+            recognition.start();
+            setIsListening(true);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+    };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
@@ -188,38 +249,74 @@ export default function CallPage() {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           finalTranscript += transcript + " ";
-          const textToSend = finalTranscript.trim();
-          if (textToSend) {
-            recognition.stop();
-            setIsListening(false);
-            setCurrentTranscript("");
-            finalTranscript = "";
-            sendToAI(textToSend).then(() => {
-              try {
-                recognition.start();
-                setIsListening(true);
-              } catch {
-                /* ignore */
-              }
-            });
-          }
         } else {
           interim += transcript;
         }
       }
-      setCurrentTranscript(interim);
+
+      interimTranscript = interim.trim();
+      setCurrentTranscript(interimTranscript);
+
+      const textToSend = finalTranscript.trim();
+      if (textToSend) {
+        void submitTranscript(textToSend);
+        return;
+      }
+
+      if (interimTranscript) {
+        clearSilenceFlushTimer();
+        silenceFlushTimerRef.current = setTimeout(() => {
+          void submitTranscript(interimTranscript);
+        }, 1600);
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      clearSilenceFlushTimer();
       if (event.error !== "no-speech" && event.error !== "aborted") {
         console.error("Speech recognition error:", event.error);
+      }
+      if (
+        shouldListenRef.current &&
+        callStateRef.current === "active" &&
+        !awaitingAiRef.current &&
+        !isMutedRef.current
+      ) {
+        setTimeout(() => {
+          try {
+            recognition.start();
+            setIsListening(true);
+          } catch {
+            /* ignore */
+          }
+        }, 250);
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      clearSilenceFlushTimer();
+      if (
+        shouldListenRef.current &&
+        callStateRef.current === "active" &&
+        !awaitingAiRef.current &&
+        !isMutedRef.current
+      ) {
+        setTimeout(() => {
+          try {
+            recognition.start();
+            setIsListening(true);
+          } catch {
+            /* ignore */
+          }
+        }, 250);
       }
     };
 
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-  }, [sendToAI]);
+  }, [isListening, sendToAI]);
 
   const startCall = useCallback(async () => {
     const p = loadProgress();
@@ -243,7 +340,30 @@ export default function CallPage() {
       await new Promise((r) => setTimeout(r, 500));
     }
 
-    const greeting = getInitialMessageForPersona(personaId);
+    let greeting = getInitialMessageForPersona(personaId);
+    try {
+      const openingProbe =
+        "Start the roleplay call naturally with one short opening line as the prospect.";
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: openingProbe }],
+          profile: getProfile(),
+          personaId,
+          modeId,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (typeof data?.response === "string" && data.response.trim()) {
+          greeting = data.response.trim();
+        }
+      }
+    } catch (e) {
+      console.warn("[call] Initial Gemini greeting failed, using fallback", e);
+    }
+
     chatHistoryRef.current.push({ role: "assistant", content: greeting });
     setMessages([
       { role: "prospect", content: greeting, timestamp: Date.now() },
@@ -256,6 +376,12 @@ export default function CallPage() {
     setCallState("ended");
     setIsListening(false);
     setIsAiTalking(false);
+    shouldListenRef.current = false;
+    awaitingAiRef.current = false;
+    if (silenceFlushTimerRef.current) {
+      clearTimeout(silenceFlushTimerRef.current);
+      silenceFlushTimerRef.current = null;
+    }
 
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -339,8 +465,14 @@ export default function CallPage() {
 
   const toggleMute = useCallback(() => {
     if (isMuted) {
+      shouldListenRef.current = true;
       startListening();
     } else {
+      shouldListenRef.current = false;
+      if (silenceFlushTimerRef.current) {
+        clearTimeout(silenceFlushTimerRef.current);
+        silenceFlushTimerRef.current = null;
+      }
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
